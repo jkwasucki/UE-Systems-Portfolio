@@ -2,6 +2,8 @@
 
 
 #include "Main/PlayerController/InputHandlerComponent.h"
+
+#include "Main/Character/Base/BaseCharacter.h"
 #include "Types/GenericTypes.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -69,10 +71,12 @@ void UInputHandlerComponent::SetupInput(UEnhancedInputComponent* InputComponent)
 		SetupInputActions(InputComponent);
 	}
 }
-void UInputHandlerComponent::SetupInputActions(UEnhancedInputComponent* EnhancedInputComponent)
+void UInputHandlerComponent::SetupInputActions(UEnhancedInputComponent* inEnhancedInputComponent)
 {
-	if (EnhancedInputComponent)
+	if (inEnhancedInputComponent)
 	{
+		EnhancedInputComponent = inEnhancedInputComponent;
+		
 		if (INTERACT_InputAction)
 		{
 			EnhancedInputComponent->BindAction(INTERACT_InputAction,ETriggerEvent::Started,this, &UInputHandlerComponent::OnInteract);
@@ -85,23 +89,6 @@ void UInputHandlerComponent::SetupInputActions(UEnhancedInputComponent* Enhanced
 		{
 			EnhancedInputComponent->BindAction(RIGHTCLICK_InputAction,ETriggerEvent::Started,this, &UInputHandlerComponent::OnRightClick);
 		}
-		if (IA_ArrowDown)
-		{
-			EnhancedInputComponent->BindAction(IA_ArrowDown,ETriggerEvent::Started,this,&UInputHandlerComponent::OnArrowDown);
-		}
-		if (IA_ArrowUp)
-		{
-			EnhancedInputComponent->BindAction(IA_ArrowUp,ETriggerEvent::Started,this,&UInputHandlerComponent::OnArrowUp);
-		}
-		if (IA_ArrowLeft)
-		{
-			
-			EnhancedInputComponent->BindAction(IA_ArrowLeft,ETriggerEvent::Started,this,&UInputHandlerComponent::OnArrowLeft);
-		}
-		if (IA_ArrowRight)
-		{
-			EnhancedInputComponent->BindAction(IA_ArrowRight,ETriggerEvent::Started,this,&UInputHandlerComponent::OnArrowRight);
-		}
 		if (IA_Space)
 		{
 			EnhancedInputComponent->BindAction(IA_Space,ETriggerEvent::Started,this,&UInputHandlerComponent::OnSpaceDown);
@@ -110,6 +97,55 @@ void UInputHandlerComponent::SetupInputActions(UEnhancedInputComponent* Enhanced
 		{
 			EnhancedInputComponent->BindAction(IA_Tab,ETriggerEvent::Started,this,&UInputHandlerComponent::OnTabDown);
 		}
+		
+		BindArrowInput(
+			EnhancedInputComponent,
+			IA_ArrowLeft,
+			EMoveDirection::LEFT
+		);
+		BindArrowInput(
+			EnhancedInputComponent,
+			IA_ArrowRight,
+			EMoveDirection::RIGHT
+		);
+		BindArrowInput(
+			EnhancedInputComponent,
+			IA_ArrowUp,
+			EMoveDirection::UP
+		);
+		BindArrowInput(
+			EnhancedInputComponent,
+			IA_ArrowDown,
+			EMoveDirection::DOWN
+		);
+		
+		BindAbilityInput(
+			EnhancedInputComponent,
+			IA_AbilitySlot1,
+			FGameplayTag::RequestGameplayTag(TEXT("Abilities.Slot.Key1"))
+		);
+
+		BindAbilityInput(
+			EnhancedInputComponent,
+			IA_AbilitySlot2,
+			FGameplayTag::RequestGameplayTag(TEXT("Abilities.Slot.Key2"))
+		);
+
+		BindAbilityInput(
+			EnhancedInputComponent,
+			IA_AbilitySlot3,
+			FGameplayTag::RequestGameplayTag(TEXT("Abilities.Slot.Key3"))
+		);
+		BindAbilityInput(
+			EnhancedInputComponent,
+			IA_AbilitySlot4,
+			FGameplayTag::RequestGameplayTag(TEXT("Abilities.Slot.Key4"))
+		);
+		BindAbilityInput(
+			EnhancedInputComponent,
+			IA_AbilitySlot5,
+			FGameplayTag::RequestGameplayTag(TEXT("Abilities.Slot.Key5"))
+		);
 	}
 }
 
@@ -129,9 +165,101 @@ void UInputHandlerComponent::SetupMappingContext()
 }
 
 
+
+void UInputHandlerComponent::BindAbilityInput(UEnhancedInputComponent* Input, UInputAction* Action,
+	const FGameplayTag& SlotTag)
+{
+	Input->BindAction(
+		Action,
+		ETriggerEvent::Started,
+		this,
+		&UInputHandlerComponent::HandleAbilityInput,
+		SlotTag,
+		EAbilityInputEvent::Started
+	);
+
+	Input->BindAction(
+		Action,
+		ETriggerEvent::Canceled,
+		this,
+		&UInputHandlerComponent::HandleAbilityInput,
+		SlotTag,
+		EAbilityInputEvent::Canceled
+	);
+
+	Input->BindAction(
+		Action,
+		ETriggerEvent::Completed,
+		this,
+		&UInputHandlerComponent::HandleAbilityInput,
+		SlotTag,
+		EAbilityInputEvent::Completed
+	);
+}
+void UInputHandlerComponent::BindArrowInput(UEnhancedInputComponent* Input, UInputAction* Action,
+	EMoveDirection Direction)
+{
+	Input->BindAction(
+		Action,
+		ETriggerEvent::Started,
+		this,
+		&UInputHandlerComponent::HandleArrowInput,
+		Direction
+		);
+}
+
+
+
 void UInputHandlerComponent::OnInteract()
 {
 	OnInteractDelegate.Broadcast();
+}
+
+void UInputHandlerComponent::ProcessResultUnderCursor(bool bHit,  const FHitResult& Hit)
+{
+	bool bHitPawn = false;
+	APawn* Pawn = nullptr;
+	if (bHit)
+	{
+		Pawn = Cast<APawn>(Hit.GetActor());
+		if (Pawn)
+			bHitPawn = true;
+	}
+	
+	if (!bHitPawn)
+	{
+		if (EntityUnderCursor)
+		{
+			EntityUnderCursor = nullptr;
+			OnNoEntityUnderCursorDelegate.Broadcast();
+		}
+		return;
+	}
+	
+	if (ABaseCharacter* Char = Cast<ABaseCharacter>(Pawn))
+	{
+		if (Char != EntityUnderCursor)
+			OnEntityUnderCursorDelegate.Broadcast(Hit.GetActor());
+		
+		EntityUnderCursor = Char;
+		return;
+	}
+
+	if (EntityUnderCursor != nullptr)
+	{
+		EntityUnderCursor = nullptr;
+		OnNoEntityUnderCursorDelegate.Broadcast();
+	}
+}
+
+void UInputHandlerComponent::HandleAbilityInput(FGameplayTag SlotTag, EAbilityInputEvent Event)
+{
+	OnAbilityInputDelegate.Broadcast(SlotTag, Event);
+}
+
+void UInputHandlerComponent::HandleArrowInput(EMoveDirection Direction)
+{
+	OnArrowPressDelegate.Broadcast(Direction);
 }
 
 void UInputHandlerComponent::OnInventory()
@@ -144,29 +272,7 @@ void UInputHandlerComponent::OnRightClick()
 {
 	OnRightClickDelegate.Broadcast();
 }
-void UInputHandlerComponent::OnArrowUp()
-{
 
-	OnArrowPressDelegate.Broadcast(EMoveDirection::UP);
-}
-
-void UInputHandlerComponent::OnArrowDown()
-{
-
-	OnArrowPressDelegate.Broadcast(EMoveDirection::DOWN);
-}
-
-void UInputHandlerComponent::OnArrowLeft()
-{
-	
-	OnArrowPressDelegate.Broadcast(EMoveDirection::LEFT);
-}
-
-void UInputHandlerComponent::OnArrowRight()
-{
-	
-	OnArrowPressDelegate.Broadcast(EMoveDirection::RIGHT);
-}
 
 void UInputHandlerComponent::OnTabDown()
 {

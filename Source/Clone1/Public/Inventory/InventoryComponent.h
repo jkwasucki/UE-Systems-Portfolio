@@ -20,7 +20,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRejected, FName, ItemID);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRequestDrop, FItemStack, ItemStack);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeightChange, int32, CurrentWeight, int32, MaxWeight);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemConsumed, FName, ItemID);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemConsumed,AActor*, Owner, FCharacterEffect&, Effect, FGuid, SourceInstanceID);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CLONE1_API UInventoryComponent : public UActorComponent

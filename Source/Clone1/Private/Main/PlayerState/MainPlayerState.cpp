@@ -3,7 +3,7 @@
 
 #include "Main/PlayerState/MainPlayerState.h"
 
-#include "Main/PlayerState/AttributesComponent.h"
+#include "Equipment/EquipmentComponent.h"
 #include "Inventory/InventoryComponent.h"
 
 
@@ -11,7 +11,7 @@ AMainPlayerState::AMainPlayerState()
 {
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 	EquipmentComponent = CreateDefaultSubobject<UEquipmentComponent>("EquipmentComponent");
-	AttributesComponent = CreateDefaultSubobject<UAttributesComponent>("AttributesComponent");
+	
 }
 
 void AMainPlayerState::BeginPlay()
@@ -20,8 +20,22 @@ void AMainPlayerState::BeginPlay()
 	
 	InventoryComponent->SetEquipmentComponentLink(EquipmentComponent);
 	EquipmentComponent->SetInventoryComponentLink(InventoryComponent);
-	AttributesComponent->SetEquipmentComponentLink(EquipmentComponent);
-	AttributesComponent->SetInventoryComponentLink(InventoryComponent);
+	
+}
+
+TArray<UAbilityData*> AMainPlayerState::GetAbilities() const
+{
+	return AvailableAbilities;
+}
+
+UAbilityData* AMainPlayerState::GetAbilityBySlot(FGameplayTag Tag)
+{
+	for (const FFAbilitySlot& Slot : AbilitySlots)
+	{
+		if (Slot.SlotTag == Tag)
+			return Slot.AbilityData;
+	}
+	return nullptr;
 }
 
 

@@ -3,7 +3,7 @@
 
 #include "Main/PlayerController/HUDComponent.h"
 #include "Engine/Engine.h"
-#include "Interfaces/Interactable.h"
+#include "Interfaces/InteractableInterface.h"
 #include "Main/PlayerController/MainPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
@@ -92,6 +92,16 @@ void UHUDComponent::SetupHUD()
 			InteractionTooltipWidget->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
+	
+	if (InteractionTooltipHUDComponent)
+	{
+		ScreenGameplayDebugWidget = CreateWidget<UScreenGameplayDebugWidget>(PC, ScreenGameplayDebugHUDComponent);
+		if (ScreenGameplayDebugWidget)
+		{
+			ScreenGameplayDebugWidget->AddToViewport();
+			ScreenGameplayDebugWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
 }
 
 
@@ -132,8 +142,8 @@ void UHUDComponent::ToggleInventory()
 
 void UHUDComponent::ShowInteractionTooltip(UInteractableComponent* inFocusedActor)
 {
-	FText KeyText = IInteractable::Execute_GetActionKeyString(inFocusedActor);
-	FText ActionText = IInteractable::Execute_GetActionText(inFocusedActor);
+	FText KeyText = IInteractableInterface::Execute_GetActionKeyString(inFocusedActor);
+	FText ActionText = IInteractableInterface::Execute_GetActionText(inFocusedActor);
 
 	InteractionTooltipWidget->SetVisibility(ESlateVisibility::Visible);
 	InteractionTooltipWidget->SetDataBP(KeyText, ActionText);
@@ -152,7 +162,10 @@ void UHUDComponent::PassReferences()
 	if (InventoryScreenWidget)
 	{
 		InventoryScreenWidget->Init(PC);
-	
+	}
+	if (ScreenGameplayDebugWidget)
+	{
+		ScreenGameplayDebugWidget->Init(PC);
 	}
 }
 

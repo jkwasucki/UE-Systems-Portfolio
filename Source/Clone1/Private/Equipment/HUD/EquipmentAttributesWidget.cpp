@@ -2,7 +2,7 @@
 
 
 #include "Equipment/HUD/EquipmentAttributesWidget.h"
-
+#include "Main/Character/AttributesComponent.h"
 #include "Main/PlayerController/MainPlayerController.h"
 #include "Main/PlayerState/MainPlayerState.h"
 
@@ -17,13 +17,21 @@ void UEquipmentAttributesWidget::Init(UInventoryScreenWidget* inOrchestrator)
 	{
 		if (inOrchestrator->PC)
 		{
-			if (AMainPlayerState* PS = inOrchestrator->PC->GetPlayerState<AMainPlayerState>())
+			if (AMainPlayerController* PC = inOrchestrator->PC)
 			{
-				AttributesComponent = PS->AttributesComponent;
-				AttributesComponent->OnAttributesChangedDelegate.AddDynamic(this, &UEquipmentAttributesWidget::OnGetNotified);
-				AttributesComponent->OnConsumableEffectAppearDelegate.AddDynamic(this, &UEquipmentAttributesWidget::DisplayConsumableEffectWidget);
-				AttributesComponent->OnConsumableEffectEndDelegate.AddDynamic(this, &UEquipmentAttributesWidget::RemoveConsumableEffectWidget);
-				AttributesComponent->OnConsumableEffectExtendDelegate.AddDynamic(this, &UEquipmentAttributesWidget::OnEffectExtended);
+				if (PC->GetPawn())
+				{
+					AttributesComponent = PC->GetPawn()->FindComponentByClass<UAttributesComponent>();
+				
+					AttributesComponent->OnAttributesChangedDelegate.AddDynamic(this, &UEquipmentAttributesWidget::OnGetNotified);
+			
+					
+					EffectsComponent = PC->GetPawn()->FindComponentByClass<UEffectsComponent>();
+					EffectsComponent->OnEffectStartDelegate.AddDynamic(this, &UEquipmentAttributesWidget::DisplayConsumableEffectWidget);
+					EffectsComponent->OnEffectEndDelegate.AddDynamic(this, &UEquipmentAttributesWidget::RemoveConsumableEffectWidget);
+					EffectsComponent->OnEffectExtendedDelegate.AddDynamic(this, &UEquipmentAttributesWidget::OnEffectExtended);
+				}
+			
 			}
 		}
 	}
@@ -36,40 +44,39 @@ void UEquipmentAttributesWidget::Toggle()
 	UpdateAttributeHUD(EAttribute::Speed);
 }
 
-void UEquipmentAttributesWidget::DisplayConsumableEffectWidget()
+void UEquipmentAttributesWidget::DisplayConsumableEffectWidget(UActiveEffectInstance* Effect)
 {
-	const TMap<FName, FConsumableEffect>& Effects = AttributesComponent->GetConsumableEffects();
+	TArray<UActiveEffectInstance*> Effects = EffectsComponent->GetConsumableEffects();
 	
 	if (Effects.Num() <= 0) return;
-	for (const TPair<FName, FConsumableEffect>& Pair : Effects)
+	for (UActiveEffectInstance* E : Effects)
 	{
-		GenerateConsumableEffectWidget(Pair.Key, Pair.Value.Duration);
+		GenerateConsumableEffectWidget(E->EffectInstanceID, E->CharacterEffectDefinition.Duration);
 	}
 	HandleBuffTextColor();	
 }
 
-void UEquipmentAttributesWidget::GenerateConsumableEffectWidget(FName ItemID, float Duration)
+void UEquipmentAttributesWidget::GenerateConsumableEffectWidget(FGuid EffecInstanceID, float Duration)
 {
 	if (ConsumableEffectWidgetComponent)
 	{
 		UEquipmentConsumableEffectWidget* ConsumableWidget = CreateWidget<UEquipmentConsumableEffectWidget>(GetOwningPlayer(),ConsumableEffectWidgetComponent);
 		if (ConsumableWidget)
 		{
-			const FItemBaseData& BaseItemData = AttributesComponent->GetBaseItemData(ItemID);
-			ConsumableWidget->SetData(BaseItemData.ItemIcon, BaseItemData.ItemName,Duration);
-			ConsumableEffectWidgetMap.Add(ItemID, ConsumableWidget);
+			// const FItemBaseData& BaseItemData = AttributesComponent->GetBaseItemData(ItemID);
+			// ConsumableWidget->SetData(BaseItemData.ItemIcon, BaseItemData.ItemName,Duration);
+			ConsumableEffectWidgetMap.Add(EffecInstanceID, ConsumableWidget);
 			
 			ConsumableEffects->AddChild(ConsumableWidget);
 		}
 	}
 }
 
-void UEquipmentAttributesWidget::RemoveConsumableEffectWidget(FName ItemID)
+void UEquipmentAttributesWidget::RemoveConsumableEffectWidget(UActiveEffectInstance* Effect)
 {
-	UE_LOG(LogTemp,Warning, TEXT("REMOVE EFFECT"));
-	for (TPair<FName, UEquipmentConsumableEffectWidget*> Pair : ConsumableEffectWidgetMap)
+	for (TPair<FGuid, UEquipmentConsumableEffectWidget*> Pair : ConsumableEffectWidgetMap)
 	{
-		if (Pair.Key == ItemID)
+		if (Pair.Key == Effect->EffectInstanceID)
 		{
 			Pair.Value->RemoveFromParent();
 			ConsumableEffectWidgetMap.Remove(Pair.Key);
@@ -110,13 +117,13 @@ void UEquipmentAttributesWidget::HandleBuffTextColor()
 	}
 }
 
-void UEquipmentAttributesWidget::OnEffectExtended(FName ItemID)
+void UEquipmentAttributesWidget::OnEffectExtended(UActiveEffectInstance* Effect)
 {
-	for (TPair<FName, UEquipmentConsumableEffectWidget*> Pair : ConsumableEffectWidgetMap)
+	for (TPair<FGuid, UEquipmentConsumableEffectWidget*> Pair : ConsumableEffectWidgetMap)
 	{
-		if (Pair.Key == ItemID)
+		if (Pair.Key == Effect->EffectInstanceID)
 		{
-			float dur = AttributesComponent->GetDurationForEffect(ItemID);
+			float dur = EffectsComponent->GetDurationForEffect(Effect->EffectInstanceID);
 			if (dur > 0.0f)
 			{
 				Pair.Value->UpdateRemainingTime(dur);

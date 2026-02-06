@@ -36,8 +36,6 @@ public:
 	void Interact();
 	UFUNCTION()
 	void HandleHighlight();
-	
-	
 	UFUNCTION()
 	UInteractableComponent* GetBestInteractable();
 };

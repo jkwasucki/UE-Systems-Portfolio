@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Structs/FItemStack.h"
-#include "Interfaces/Interactable.h"
+#include "Interfaces/InteractableInterface.h"
 #include "Components/InteractableComponent.h"
 #include "Components/SphereComponent.h"
 #include "Item.generated.h"

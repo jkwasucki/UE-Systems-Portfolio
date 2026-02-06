@@ -5,16 +5,14 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Types/AttributeTypes.h"
-#include "Structs/AttributeValue.h"
+#include "Structs/FAttributeValue.h"
 #include "Inventory/InventoryComponent.h"
 #include "AttributesComponent.generated.h"
 
+class UEffectsComponent;
 class UEquipmentComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttributesChanged);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnConsumableEffectAppear);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnConsumableEffectExtend, FName, ItemID);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnConsumableEffectEnd, FName, ItemID);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CLONE1_API UAttributesComponent : public UActorComponent
@@ -27,29 +25,34 @@ public:
 
 protected:
 	
-	UPROPERTY(EditAnywhere)
-	TMap<EAttribute,FAttributeValue> Attributes;
-	
-	UPROPERTY()
-	TMap<FName, FConsumableEffect> ConsumableEffects;
-	UPROPERTY()
-	TMap<FName, FTimerHandle> EffectTimers;
-	
-	UFUNCTION()
-	void RemoveModifiers(const FItemData& ItemData);
+	UPROPERTY(EditDefaultsOnly)
+	TMap<EAttribute,FFAttributeValue> Attributes;
 
-	UFUNCTION()
-	void AddModifiers(const FItemData& ItemData);
-public:	
+public:
+	UPROPERTY()
+	UEffectsComponent* EffectsComponent = nullptr;
+	
 	const float MaxSpeedAttribute = 100.f;
 	const float MaxHealthAttribute = 100.f;
 	const float MaxArmorAttribute = 100.f;
 	
+
+	
 	FOnAttributesChanged OnAttributesChangedDelegate;
-	FOnConsumableEffectAppear OnConsumableEffectAppearDelegate;
-	FOnConsumableEffectEnd OnConsumableEffectEndDelegate;
-	FOnConsumableEffectExtend OnConsumableEffectExtendDelegate;
-	// API
+	
+
+	
+	UFUNCTION()
+	void IncreaseAttribute(EAttribute Attribute, float Value);
+	UFUNCTION()
+	void DecreaseAttribute(EAttribute Attribute, float Value);
+
+	UFUNCTION()
+	void AddModifiers(const FItemData& ItemData);
+	UFUNCTION()
+	void RemoveModifiers(const FItemData& ItemData);
+	
+	// GETTERS
 	UFUNCTION()
 	float GetFinalAttributeValue(EAttribute Attribute) const;
 	UFUNCTION()
@@ -61,22 +64,10 @@ public:
 	UFUNCTION()
 	bool IsAnyBuffActiveForAttribute(EAttribute Attribute);
 	UFUNCTION()
-	float GetDurationForEffect(FName ItemID);
-	
-	UFUNCTION()
-	void OnConsumableUsed(FName ItemID);
-	UFUNCTION()
-	void ApplyConsumableEffect(FName ItemID, const FConsumableEffect& Effect);
-	UFUNCTION()
-	void ResetConsumableEffect(FName ItemID, const FConsumableEffect& Effect);
-	UFUNCTION()
-	void RemoveConsumableEffect(FName ItemID);
-	UFUNCTION()
-	const TMap<FName, FConsumableEffect>& GetConsumableEffects();	
-	
+	const TMap<EAttribute,FFAttributeValue>& GetAttributes();
+
 	UPROPERTY(EditAnywhere)
 	UDataTable* ItemsDataTable;
 	
 	void SetEquipmentComponentLink(UEquipmentComponent* EquipmentComponent);
-	void SetInventoryComponentLink(UInventoryComponent* InventoryComponent);
 };

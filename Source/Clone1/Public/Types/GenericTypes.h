@@ -11,3 +11,10 @@ enum class EMoveDirection : uint8
 	LEFT,
 	RIGHT
 };
+
+UENUM(BlueprintType)
+enum class EAnimationBodyPart : uint8
+{
+	Fullbody,
+	Upperbody,
+};

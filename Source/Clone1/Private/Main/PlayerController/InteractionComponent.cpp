@@ -3,7 +3,7 @@
 
 #include "Main/PlayerController/InteractionComponent.h"
 
-#include "Interfaces/Interactable.h"
+#include "Interfaces/InteractableInterface.h"
 #include "Components/InteractableComponent.h"
 #include "Main/PlayerController/MainPlayerController.h"
 
@@ -35,7 +35,7 @@ void UInteractionComponent::TickComponent(float DeltaTime, enum ELevelTick TickT
 void UInteractionComponent::Interact()
 {
 	if (NearbyInteractables.IsEmpty()) return;
-	IInteractable::Execute_Interact(GetBestInteractable(), PC->GetCharacter());
+	IInteractableInterface::Execute_Interact(GetBestInteractable(), PC->GetCharacter());
 }
 
 void UInteractionComponent::HandleHighlight()
@@ -43,7 +43,7 @@ void UInteractionComponent::HandleHighlight()
 	if (NearbyInteractables.IsEmpty())
 	{
 		if (FocusedActorComponent != nullptr)
-			IInteractable::Execute_Highlight(FocusedActorComponent,false);
+			IInteractableInterface::Execute_Highlight(FocusedActorComponent,false);
 		
 		FocusedActorComponent = nullptr;
 		return;
@@ -54,13 +54,15 @@ void UInteractionComponent::HandleHighlight()
 	if (Best == FocusedActorComponent) return;
 	
 	if (FocusedActorComponent != nullptr)
-		IInteractable::Execute_Highlight(FocusedActorComponent,false);
+		IInteractableInterface::Execute_Highlight(FocusedActorComponent,false);
 		
 	FocusedActorComponent = Best;
 	
 	
-	IInteractable::Execute_Highlight(FocusedActorComponent,true);
+	IInteractableInterface::Execute_Highlight(FocusedActorComponent,true);
 }
+
+
 
 UInteractableComponent* UInteractionComponent::GetBestInteractable()
 {
@@ -77,7 +79,7 @@ UInteractableComponent* UInteractionComponent::GetBestInteractable()
 		UInteractableComponent* InteractableComponent = Actor->GetComponentByClass<UInteractableComponent>();
 		
 		if (!IsValid(Actor)) continue;
-		if (!InteractableComponent && !InteractableComponent->Implements<UInteractable>()) continue;
+		if (!InteractableComponent && !InteractableComponent->Implements<UInteractableInterface>()) continue;
 		
 		float Dist = FVector::DistSquared(
 			Actor->GetActorLocation(),

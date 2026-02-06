@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InputHandlerComponent.h"
+#include "Main/PlayerController/InputHandlerComponent.h"
 #include "GameFramework/PlayerController.h"
-#include "InteractionComponent.h"
-#include "HUDComponent.h"
+#include "Main/PlayerController/InteractionComponent.h"
+#include "Main/PlayerController/HUDComponent.h"
 #include "MainPlayerController.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEntityDebugSnapshot,ABaseCharacter*, BaseCharacter, FEntityGameplayDebugSnapshot, Snapshot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEntityDebugSnapshot_Expired);
+
 class UEnhancedInputComponent;
 class AArcadeMachine;
 UCLASS()
@@ -18,31 +22,54 @@ class CLONE1_API AMainPlayerController : public APlayerController
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
-	
+	virtual void Tick(float DeltaSeconds) override;
 	
 public:
 	AMainPlayerController();
 	
+	
+	// COMPONENTS
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	UInputHandlerComponent* InputHandlerComponent = nullptr;
+	UInputHandlerComponent* InputHandlerComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UInteractionComponent* InteractionComponent = nullptr;
+	UInteractionComponent* InteractionComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	UHUDComponent* HUDComponent = nullptr;
+	UHUDComponent* HUDComponent;
 	
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// DELEGATES
+	FOnEntityDebugSnapshot OnEntityDebugSnapshotDelegate;
+	FOnEntityDebugSnapshot_Expired OnEntityDebugSnapshot_ExpiredDelegate;
+	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UDataTable* ItemsDataTable = nullptr;
 	
 	UFUNCTION()
 	void SpawnItemActor(FItemStack ItemStack);
 	
+
 	UFUNCTION()
-	FVector GetDropLocation();
+	void SetEntityDataExpired();
+	
+	
 	UFUNCTION()
 	void StartPacmanGame(AArcadeMachine* PG);
 	UFUNCTION()
 	void StopArcade();
+	
+	
+	// GETTERS / QUERIES
+	UFUNCTION()
+	void GetEntityData(AActor* Actor);
+	UFUNCTION()
+	FVector GetDropLocation();
+	UFUNCTION()
+	void QueryEntityUnderCursor();
+	UFUNCTION()
+	FVector GetCharacterLocation();
+	UFUNCTION(BlueprintPure)
+	UHUDComponent* GetHUDComponent() const;
 };
 
 

@@ -8,7 +8,7 @@ public class Clone1 : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate","SlateCore","Paper2D" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate","SlateCore","Paper2D",  "GameplayTags", "Niagara" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 		

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interfaces/Interactable.h"
+#include "Interfaces/InteractableInterface.h"
 #include "GameFramework/Character.h"
 #include "Components/ActorComponent.h"
 #include "Components/SphereComponent.h"
@@ -13,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractable_Interact, ACharacter
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractable_Highlight, bool, State);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class CLONE1_API UInteractableComponent : public UActorComponent, public IInteractable
+class CLONE1_API UInteractableComponent : public UActorComponent, public IInteractableInterface
 {
 	GENERATED_BODY()
 

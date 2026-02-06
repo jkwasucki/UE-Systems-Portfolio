@@ -2,10 +2,10 @@
 
 
 #include "Main/PlayerController/MainPlayerController.h"
-
+#include "Main/Character/Base/BaseCharacter.h"
 #include "Actors/ArcadeMachine.h"
-#include "PacMan/PacmanGame.h"
 #include "EnhancedInputComponent.h"
+#include "Interfaces/DebugInfoProviderInterface.h"
 #include "Main/PlayerState/MainPlayerState.h"
 
 
@@ -23,6 +23,9 @@ void AMainPlayerController::BeginPlay()
 	
 	//Capture drop requests from InventoryComponent (PlayerState)
 	GetPlayerState<AMainPlayerState>()->InventoryComponent->OnRequestDropDelegate.AddDynamic(this, &AMainPlayerController::SpawnItemActor);
+	InputHandlerComponent->OnEntityUnderCursorDelegate.AddDynamic(this, &AMainPlayerController::GetEntityData);
+	InputHandlerComponent->OnNoEntityUnderCursorDelegate.AddDynamic(this, &AMainPlayerController::SetEntityDataExpired);
+	
 }
 
 void AMainPlayerController::SetupInputComponent()
@@ -34,6 +37,13 @@ void AMainPlayerController::SetupInputComponent()
 
 	InputHandlerComponent->SetupInput(EI);
 }
+
+void AMainPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	QueryEntityUnderCursor();
+}
+
 void AMainPlayerController::SpawnItemActor(FItemStack ItemStack)
 {
 	const FItemData* ItemData = ItemsDataTable->FindRow<FItemData>(ItemStack.ItemID,TEXT(""));
@@ -60,6 +70,48 @@ void AMainPlayerController::SpawnItemActor(FItemStack ItemStack)
 			SpawnedItem->EnablePhysics();
 		}
 	}
+}
+
+void AMainPlayerController::GetEntityData(AActor* Actor)
+{
+	if (Actor->Implements<UDebugInfoProviderInterface>())
+	{
+		ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(Actor);
+		FEntityGameplayDebugSnapshot Snapshot = IDebugInfoProviderInterface::Execute_GetDebugInfo(Actor);
+		OnEntityDebugSnapshotDelegate.Broadcast(BaseCharacter,Snapshot);
+	}
+}
+
+void AMainPlayerController::SetEntityDataExpired()
+{
+	OnEntityDebugSnapshot_ExpiredDelegate.Broadcast();
+}
+
+void AMainPlayerController::QueryEntityUnderCursor()
+{
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(GetPawn());
+	
+	int32 SizeX, SizeY;
+	GetViewportSize(SizeX, SizeY);
+
+	const FVector2D ScreenCenter(
+		SizeX * 0.5f,
+		SizeY * 0.5f
+	);
+	
+	FHitResult Hit;
+	const bool bHit = GetHitResultAtScreenPosition(
+	   ScreenCenter,
+	   ECC_PhysicsBody,
+	   QueryParams,
+	   Hit
+   );
+
+	InputHandlerComponent->ProcessResultUnderCursor(
+		bHit,
+		Hit
+	);
 }
 
 FVector AMainPlayerController::GetDropLocation()
@@ -108,4 +160,13 @@ void AMainPlayerController::StopArcade()
 	
 	SetIgnoreLookInput(false);
 	SetIgnoreMoveInput(false);
+}
+UHUDComponent* AMainPlayerController::GetHUDComponent() const
+{
+	return FindComponentByClass<UHUDComponent>();
+}
+
+FVector AMainPlayerController::GetCharacterLocation()
+{
+	return GetCharacter()->GetActorLocation();
 }

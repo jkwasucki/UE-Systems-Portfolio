@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "Interactable.generated.h"
+#include "InteractableInterface.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE(BlueprintType)
-class UInteractable : public UInterface
+class UInteractableInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,7 +16,7 @@ class UInteractable : public UInterface
 /**
  * 
  */
-class CLONE1_API IInteractable
+class CLONE1_API IInteractableInterface
 {
 	GENERATED_BODY()
 	

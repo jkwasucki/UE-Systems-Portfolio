@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "OtherHUD/GameplayDebug/ScreenGameplayDebugWidget.h"
 #include "Components/InteractableComponent.h"
 #include "OtherHUD/InteractionTooltipWidget.h"
 #include "Inventory/HUD/InventoryScreenWidget.h"
@@ -10,6 +11,7 @@
 #include "HUDComponent.generated.h"
 
 class AMainPlayerController;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CLONE1_API UHUDComponent : public UActorComponent
 {
@@ -31,17 +33,21 @@ public:
 	AMainPlayerController* PC = nullptr;
 	
 	// SUBCLASSES
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
 	TSubclassOf<UInventoryScreenWidget> InventoryScreenHUDComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TSubclassOf<UInteractionTooltipWidget> InteractionTooltipHUDComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSubclassOf<UScreenGameplayDebugWidget> ScreenGameplayDebugHUDComponent;
+	
 	
 	// WIDGET INSTANCES
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite);
 	UInventoryScreenWidget* InventoryScreenWidget = nullptr;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere)
 	UInteractionTooltipWidget* InteractionTooltipWidget = nullptr;
-	
+	UPROPERTY(VisibleAnywhere)
+	UScreenGameplayDebugWidget* ScreenGameplayDebugWidget = nullptr;
 	
 	
 	UFUNCTION()
@@ -55,6 +61,7 @@ public:
 	
 	UFUNCTION()
 	void ShowInteractionTooltip(UInteractableComponent* inFocusedActor);
+	
 	UFUNCTION()
 	void HideInteractionTooltip();
 	

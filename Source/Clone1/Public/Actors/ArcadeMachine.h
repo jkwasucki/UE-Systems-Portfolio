@@ -14,7 +14,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuit);
 class APacmanGame;
 UCLASS()
-class CLONE1_API AArcadeMachine : public AActor,public IInteractable
+class CLONE1_API AArcadeMachine : public AActor,public IInteractableInterface
 {
 	GENERATED_BODY()
 	

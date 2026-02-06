@@ -1,9 +1,9 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
-#include "AttributeValue.generated.h"
+#include "FAttributeValue.generated.h"
 
 USTRUCT(BlueprintType)
-struct FAttributeValue
+struct FFAttributeValue
 {
 	GENERATED_BODY();
 	

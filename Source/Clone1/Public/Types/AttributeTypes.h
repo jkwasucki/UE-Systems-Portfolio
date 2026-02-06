@@ -9,5 +9,6 @@ enum class EAttribute : uint8
 	None,
 	Armor,
 	Health,
-	Speed
+	Speed,
+	Attack
 };

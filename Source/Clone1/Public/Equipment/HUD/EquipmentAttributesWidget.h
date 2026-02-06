@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Main/PlayerState/AttributesComponent.h"
+#include "Main/Character//AttributesComponent.h"
 #include "EquipmentConsumableEffectWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Structs/FItemData.h"
 #include "Inventory/HUD/InventoryScreenWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
+#include "Main/Character/EffectsComponent.h"
 #include "EquipmentAttributesWidget.generated.h"
 
 /**
@@ -29,12 +30,13 @@ protected:
 	bool bIsInitialized = false;
 	
 	UPROPERTY()
-	TMap<FName, UEquipmentConsumableEffectWidget*> ConsumableEffectWidgetMap;
+	TMap<FGuid, UEquipmentConsumableEffectWidget*> ConsumableEffectWidgetMap;
 	
 public:
 	UPROPERTY()
 	UAttributesComponent* AttributesComponent = nullptr;
-	
+	UPROPERTY()
+	UEffectsComponent* EffectsComponent = nullptr;
 	// BIND WIDGETS
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* TotalArmorValue;
@@ -71,12 +73,12 @@ public:
 	UFUNCTION()
 	void Toggle();
 	UFUNCTION()
-	void DisplayConsumableEffectWidget();
+	void DisplayConsumableEffectWidget(UActiveEffectInstance* Effect);
 	UFUNCTION()
-	void GenerateConsumableEffectWidget(FName ItemID,float Duration);
+	void GenerateConsumableEffectWidget(FGuid EffecInstanceID,float Duration);
 	UFUNCTION()
-	void RemoveConsumableEffectWidget(FName ItemID);
+	void RemoveConsumableEffectWidget(UActiveEffectInstance* Effect);
 	
 	UFUNCTION()
-	void OnEffectExtended(FName ItemID);
+	void OnEffectExtended(UActiveEffectInstance* Effect);
 };

@@ -3,7 +3,8 @@
 
 #include "Types/AttributeTypes.h"
 #include "Engine/DataTable.h"
-#include "AttributeValue.h"
+#include "FAttributeValue.h"
+#include "FCharacterEffect.h"
 #include "Actors/Item.h"
 #include "Types/ItemTypes.h"
 #include "FItemData.generated.h"
@@ -12,6 +13,9 @@ USTRUCT(BlueprintType)
 struct FConsumableEffect
 {
 	GENERATED_BODY();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EEffectMode Mode;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EAttribute Attribute;
@@ -31,8 +35,6 @@ struct FItemConsumableData
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EConsumableType ConsumableType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FConsumableEffect ConsumableEffect;
 };
 
 USTRUCT(BlueprintType)
@@ -47,7 +49,7 @@ struct FItemEquipableData
 	USkeletalMesh* VisualMesh = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TMap<EAttribute, FAttributeValue> Modifiers;
+	TMap<EAttribute, FFAttributeValue> Modifiers;
 };
 
 USTRUCT(BlueprintType)
@@ -83,11 +85,14 @@ struct FItemBaseData
 USTRUCT(BlueprintType)
 struct FItemData : public FTableRowBase
 {
-	
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FItemBaseData ItemBaseData;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bHasEffect;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FCharacterEffect ItemEffect;
 	
 	UPROPERTY(EditDefaultsOnly)
 	bool bIsEquipable;

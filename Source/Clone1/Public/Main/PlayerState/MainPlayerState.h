@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AttributesComponent.h"
-#include "Equipment/EquipmentComponent.h"
 #include "Inventory/InventoryComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "Structs/FAbilitySlot.h"
 #include "MainPlayerState.generated.h"
 
 /**
@@ -20,10 +19,19 @@ public:
 	AMainPlayerState();
 	
 	virtual void BeginPlay() override;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UInventoryComponent* InventoryComponent = nullptr;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	UEquipmentComponent* EquipmentComponent = nullptr;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	UAttributesComponent* AttributesComponent = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UInventoryComponent* InventoryComponent;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	UEquipmentComponent* EquipmentComponent;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TArray<UAbilityData*> AvailableAbilities;			// WHAT IS AVAILABLE TO USE
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
+	TArray<FFAbilitySlot> AbilitySlots;					// ABILITY PER KEY SLOT
+	
+	UFUNCTION()
+	TArray<UAbilityData*> GetAbilities() const;
+	UFUNCTION()
+	UAbilityData* GetAbilityBySlot(FGameplayTag Tag);
+
 };

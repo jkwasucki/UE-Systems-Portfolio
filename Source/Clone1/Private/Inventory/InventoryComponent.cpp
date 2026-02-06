@@ -310,8 +310,12 @@ void UInventoryComponent::DecreaseAmount(int32 Index, int32 Amount)
 
 void UInventoryComponent::ConsumeItem(int32 Index)
 {
+	FItemData* ItemData = ItemsDataTable->FindRow<FItemData>(Items[Index].ItemID, TEXT(""));
+	if (!ItemData) return;
+	
 	Items[Index].Amount -= 1;
-	OnItemConsumedDelegate.Broadcast(Items[Index].ItemID);
+	
+	OnItemConsumedDelegate.Broadcast(GetOwner(), ItemData->ItemEffect,FGuid());
 	
 	if (Items[Index].Amount <= 0)
 	{
