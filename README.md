@@ -13,6 +13,18 @@ Instead of using GAS, this system focuses on readable gameplay architecture: **a
 
 ---
 
+<p align="center">
+  <img src="assets//SpeedBuff-ezgif.com-optimize.gif" width="30%" />
+  <img src="assets//Projectile2-ezgif.com-speed.gif" width="30%" />
+  <img src="assets/Revive-optimized.gif" width="30%" />
+</p>
+
+<p align="center">
+  <img src="assets/gif4.gif" width="30%" />
+  <img src="assets/gif5.gif" width="30%" />
+</p>
+
+
 ## Core Architecture
 
 - **`UAbilitySystemComponent`** is the gameplay authority:
@@ -69,6 +81,32 @@ Instead of using GAS, this system focuses on readable gameplay architecture: **a
 
 ---
 
+## Debug & Development Tools
+<p align="left" style="margin-bottom: 100px;">
+  <img src="assets/Debug1.png" width="300" style="vertical-align: top;" />
+  <img src="assets/Debug2.png" width="300" style="vertical-align: top;" />
+</p>
+
+<p align="left">
+  <em>Player (Owner) (left), Target (Enemy/Ally) (Right).</em>
+</p>
+
+Built-in gameplay debug HUD showing:
+
+- entity state
+- resources
+- attributes
+- active abilities
+- active effects
+
+Debug data is provided through **structured snapshot objects**, not direct widget queries.
+
+This allows quick verification of gameplay state during:
+
+- ability casts
+- damage events
+- effect application
+---
 ## Example Implementations
 
 - **Projectile Effect**  
