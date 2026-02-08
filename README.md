@@ -20,7 +20,7 @@ Instead of using GAS, this system focuses on readable gameplay architecture: **a
 </p>
 
 <p align="center">
-  <img src="assets/gif4.gif" width="30%" />
+  <img src="assets/Projectile2-optimized.gif" width="30%" />
   <img src="assets/gif5.gif" width="30%" />
 </p>
 
