@@ -14,14 +14,14 @@ Instead of using GAS, this system focuses on readable gameplay architecture: **a
 ---
 
 <p align="center">
-  <img src="assets//SpeedBuff-ezgif.com-optimize.gif" width="30%" />
+  <img src="assets//SpeedBuff-optimized.gif" width="30%" />
   <img src="assets//Projectile2-ezgif.com-speed.gif" width="30%" />
   <img src="assets/Revive-optimized.gif" width="30%" />
 </p>
 
 <p align="center">
-  <img src="assets/Projectile2-optimized.gif" width="30%" />
-  <img src="assets/gif5.gif" width="30%" />
+  <img src="assets/AOE-optimized.gif" width="30%" />
+  <img src="assets/EnergyRestoration-optimized.gif" width="30%" />
 </p>
 
 
