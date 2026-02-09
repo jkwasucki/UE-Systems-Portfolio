@@ -12,8 +12,8 @@ The project uses a modular, component-driven character architecture where all ga
 
 
 <p align="center">
-  <img src="assets/Fight1.gif" width="50%" />
-  <img src="assets/Fight2.gif" width="50%" />
+  <img src="assets/Fight1.gif" width="30%" />
+  <img src="assets/Fight2.gif" width="30%" />
 </p>
 
 
