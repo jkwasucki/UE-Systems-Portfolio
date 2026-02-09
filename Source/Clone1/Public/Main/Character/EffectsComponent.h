@@ -10,6 +10,7 @@
 #include "EffectsComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEffectStart,UActiveEffectInstance*, Effect);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnConsumableEffectStart,UActiveEffectInstance*, Effect, FName, ItemID);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEffectsComponent_OnEffectEnd,UActiveEffectInstance*, Effect);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEffectExtended,UActiveEffectInstance*, Effect);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRequestVFX,FVFXData&, VFX, const FGuid&, EffectInstanceID);
@@ -38,10 +39,15 @@ public:
 	UPROPERTY()
 	UAttributesComponent* AttributesComponent = nullptr;
 	
-	
+	UPROPERTY()
+	FOnConsumableEffectStart OnConsumableEffectStartDelegate;
+	UPROPERTY()
 	FOnEffectStart OnEffectStartDelegate;
+	UPROPERTY()
 	FEffectsComponent_OnEffectEnd OnEffectEndDelegate;
+	UPROPERTY()
 	FOnEffectExtended OnEffectExtendedDelegate;
+	
 	FOnRequestVFX OnRequestVFXDelegate;
 	FOnRequestVFXEnd OnRequestVFXEndDelegate;
 	
@@ -52,6 +58,8 @@ public:
 	
 	UFUNCTION()
 	void ApplyEffect(AActor* EffectOrigin,FCharacterEffect& Effect,FGuid AbilityInstanceID);
+	UFUNCTION()
+	void ApplyConsumableEffect(AActor* EffectOrigin,FCharacterEffect& Effect,FGuid AbilityInstanceID, FName ItemID);
 	UFUNCTION()
 	TArray<FGuid> RemoveEffects(AActor* EffectOrigin,const FGuid& SourceInstanceID, bool bFailure);
 	UFUNCTION()

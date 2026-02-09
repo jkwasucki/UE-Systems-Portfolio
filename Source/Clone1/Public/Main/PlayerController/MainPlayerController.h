@@ -28,6 +28,8 @@ public:
 	AMainPlayerController();
 	
 	
+	/// TODO: FIX ITEM DATA TABLES BEING IN SO MANY CLASSES (MOVE TO INVENTORY ONLY - QUERY FROM THERE)
+	
 	// COMPONENTS
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	UInputHandlerComponent* InputHandlerComponent;

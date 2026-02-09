@@ -93,13 +93,13 @@ void UHUDComponent::SetupHUD()
 		}
 	}
 	
-	if (InteractionTooltipHUDComponent)
+	if (ScreenGameplayDebugHUDComponent)
 	{
 		ScreenGameplayDebugWidget = CreateWidget<UScreenGameplayDebugWidget>(PC, ScreenGameplayDebugHUDComponent);
 		if (ScreenGameplayDebugWidget)
 		{
 			ScreenGameplayDebugWidget->AddToViewport();
-			ScreenGameplayDebugWidget->SetVisibility(ESlateVisibility::Visible);
+			ScreenGameplayDebugWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 		}
 	}
 }

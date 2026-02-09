@@ -27,9 +27,13 @@ void UEquipmentAttributesWidget::Init(UInventoryScreenWidget* inOrchestrator)
 			
 					
 					EffectsComponent = PC->GetPawn()->FindComponentByClass<UEffectsComponent>();
-					EffectsComponent->OnEffectStartDelegate.AddDynamic(this, &UEquipmentAttributesWidget::DisplayConsumableEffectWidget);
-					EffectsComponent->OnEffectEndDelegate.AddDynamic(this, &UEquipmentAttributesWidget::RemoveConsumableEffectWidget);
-					EffectsComponent->OnEffectExtendedDelegate.AddDynamic(this, &UEquipmentAttributesWidget::OnEffectExtended);
+
+					if (EffectsComponent)
+					{
+						EffectsComponent->OnConsumableEffectStartDelegate.AddDynamic(this, &UEquipmentAttributesWidget::DisplayConsumableEffectWidget);
+						EffectsComponent->OnEffectEndDelegate.AddDynamic(this, &UEquipmentAttributesWidget::RemoveConsumableEffectWidget);
+						EffectsComponent->OnEffectExtendedDelegate.AddDynamic(this, &UEquipmentAttributesWidget::OnEffectExtended);
+					}
 				}
 			
 			}
@@ -44,27 +48,33 @@ void UEquipmentAttributesWidget::Toggle()
 	UpdateAttributeHUD(EAttribute::Speed);
 }
 
-void UEquipmentAttributesWidget::DisplayConsumableEffectWidget(UActiveEffectInstance* Effect)
+void UEquipmentAttributesWidget::DisplayConsumableEffectWidget(UActiveEffectInstance* Effect, FName ItemID)
 {
-	TArray<UActiveEffectInstance*> Effects = EffectsComponent->GetConsumableEffects();
-	
-	if (Effects.Num() <= 0) return;
+	if (!IsValid(EffectsComponent))
+		return;
+
+	const TArray<UActiveEffectInstance*> Effects = EffectsComponent->GetConsumableEffects();
 	for (UActiveEffectInstance* E : Effects)
 	{
-		GenerateConsumableEffectWidget(E->EffectInstanceID, E->CharacterEffectDefinition.Duration);
+		if (!IsValid(E)) continue;
+		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("SDDASDAS"));
+		GenerateConsumableEffectWidget(E->EffectInstanceID, E->CharacterEffectDefinition.Duration, ItemID);
 	}
-	HandleBuffTextColor();	
+
+	HandleBuffTextColor();
 }
 
-void UEquipmentAttributesWidget::GenerateConsumableEffectWidget(FGuid EffecInstanceID, float Duration)
+
+void UEquipmentAttributesWidget::GenerateConsumableEffectWidget(FGuid EffecInstanceID, float Duration, FName ItemID)
 {
 	if (ConsumableEffectWidgetComponent)
 	{
 		UEquipmentConsumableEffectWidget* ConsumableWidget = CreateWidget<UEquipmentConsumableEffectWidget>(GetOwningPlayer(),ConsumableEffectWidgetComponent);
 		if (ConsumableWidget)
 		{
-			// const FItemBaseData& BaseItemData = AttributesComponent->GetBaseItemData(ItemID);
-			// ConsumableWidget->SetData(BaseItemData.ItemIcon, BaseItemData.ItemName,Duration);
+			GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("SDDASDAS"));
+			const FItemBaseData& BaseItemData = AttributesComponent->GetBaseItemData(ItemID);
+			ConsumableWidget->SetData(BaseItemData.ItemIcon, BaseItemData.ItemName,Duration);
 			ConsumableEffectWidgetMap.Add(EffecInstanceID, ConsumableWidget);
 			
 			ConsumableEffects->AddChild(ConsumableWidget);

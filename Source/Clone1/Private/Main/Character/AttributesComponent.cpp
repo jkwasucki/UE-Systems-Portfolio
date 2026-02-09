@@ -96,7 +96,13 @@ const FItemBaseData& UAttributesComponent::GetBaseItemData(FName ItemID)
 
 bool UAttributesComponent::IsAnyBuffActiveForAttribute(EAttribute Attribute)
 {
-	for ( UActiveEffectInstance* Effect : EffectsComponent->GetConsumableEffects())
+	if (!IsValid(EffectsComponent))
+	{
+		return false;
+	}
+	TArray<UActiveEffectInstance*> Effects = EffectsComponent->GetConsumableEffects();
+	
+	for ( UActiveEffectInstance* Effect : Effects)
 	{
 		if (Effect->CharacterEffectDefinition.TargetedAttribute == Attribute)
 		{
@@ -120,6 +126,14 @@ void UAttributesComponent::SetEquipmentComponentLink(UEquipmentComponent* inEqui
 	{
 		inEquipmentComponent->OnItemEquipped2Delegate.AddDynamic(this, &UAttributesComponent::AddModifiers);
 		inEquipmentComponent->OnItemUnequipped2Delegate.AddDynamic(this, &UAttributesComponent::RemoveModifiers);
+	}
+}
+
+void UAttributesComponent::SetEffectsComponentLink(UEffectsComponent* InEffectsComponent)
+{
+	if (InEffectsComponent)
+	{
+		EffectsComponent = InEffectsComponent;
 	}
 }
 

@@ -73,9 +73,9 @@ public:
 	UFUNCTION()
 	void Toggle();
 	UFUNCTION()
-	void DisplayConsumableEffectWidget(UActiveEffectInstance* Effect);
+	void DisplayConsumableEffectWidget(UActiveEffectInstance* Effect, FName ItemID);
 	UFUNCTION()
-	void GenerateConsumableEffectWidget(FGuid EffecInstanceID,float Duration);
+	void GenerateConsumableEffectWidget(FGuid EffecInstanceID,float Duration, FName ItemID);
 	UFUNCTION()
 	void RemoveConsumableEffectWidget(UActiveEffectInstance* Effect);
 	

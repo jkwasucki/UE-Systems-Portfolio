@@ -7,6 +7,7 @@
 #include "Inventory/HUD/InventoryWidget.h"
 #include "Main/PlayerController/MainPlayerController.h"
 #include "Algo/Find.h"
+#include "Main/PlayerState/MainPlayerState.h"
 
 
 UInventoryComponent::UInventoryComponent()
@@ -310,18 +311,34 @@ void UInventoryComponent::DecreaseAmount(int32 Index, int32 Amount)
 
 void UInventoryComponent::ConsumeItem(int32 Index)
 {
-	FItemData* ItemData = ItemsDataTable->FindRow<FItemData>(Items[Index].ItemID, TEXT(""));
-	if (!ItemData) return;
-	
+	if (!ItemsDataTable || !Items.IsValidIndex(Index))
+		return;
+
+	FItemData* ItemData =
+		ItemsDataTable->FindRow<FItemData>(Items[Index].ItemID, TEXT(""));
+	if (!ItemData)
+		return;
+
 	Items[Index].Amount -= 1;
-	
-	OnItemConsumedDelegate.Broadcast(GetOwner(), ItemData->ItemEffect,FGuid());
-	
+
+	if (AMainPlayerState* State = Cast<AMainPlayerState>(GetOwner()))
+	{
+		if (APawn* Pawn = State->GetPawn()) 
+		{
+			OnItemConsumedDelegate.Broadcast(
+				Pawn,
+				ItemData->ItemEffect,
+				FGuid::NewGuid(),
+				Items[Index].ItemID
+			);
+		}
+	}
+
 	if (Items[Index].Amount <= 0)
 	{
 		Items[Index].Reset();
 	}
+
 	UpdateWeight();
 	OnInventoryChanged.Broadcast();
-	
 }

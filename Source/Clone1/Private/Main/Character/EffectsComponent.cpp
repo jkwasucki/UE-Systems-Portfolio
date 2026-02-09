@@ -59,8 +59,51 @@ void UEffectsComponent::ApplyEffect(AActor* EffectOrigin,FCharacterEffect& Effec
 		
 		if (NewEffect->CharacterEffectDefinition.bHasVFX)
 			OnRequestVFXDelegate.Broadcast(NewEffect->CharacterEffectDefinition.VFXData, NewEffect->EffectInstanceID);
-		
+		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("EFF!"));
 		OnEffectStartDelegate.Broadcast(NewEffect);
+	}
+}
+
+void UEffectsComponent::ApplyConsumableEffect(AActor* EffectOrigin,FCharacterEffect& Effect,FGuid SourceInstanceID, FName ItemID)
+{
+	if (IsEffectActiveByTypeID(Effect.TypeID))
+	{
+		if (!Effect.bCanStack)
+		{
+			//REset
+		}
+		else
+		{
+			// stack
+		}
+	}
+	else
+	{
+		UActiveEffectInstance* NewEffect = NewObject<UActiveEffectInstance>(this);
+		NewEffect->Initialize(EffectOrigin,GetOwner<ABaseCharacter>(),Effect,SourceInstanceID);
+		NewEffect->OnEffectEndDelegate.AddDynamic(this,&UEffectsComponent::HandleEffectEnded);
+		
+		// EFFECT is applied from some external actor (not this Character)
+		if (EffectOrigin != GetOwner())
+		{
+			if (EffectOrigin->Implements<UCharacterEffectReceiverInterface>())
+			{
+				UAbilitySystemComponent* ASC = ICharacterEffectReceiverInterface::Execute_GetAbilitySystemComponent(EffectOrigin);
+				if (ASC)
+					ASC->OnAbilityAbortedDelegate.AddUniqueDynamic(
+						this,
+						&UEffectsComponent::ExternalOriginAborted
+					);
+			}
+		}
+		
+		
+		ActiveEffects.Add(NewEffect);
+		
+		if (NewEffect->CharacterEffectDefinition.bHasVFX)
+			OnRequestVFXDelegate.Broadcast(NewEffect->CharacterEffectDefinition.VFXData, NewEffect->EffectInstanceID);
+		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("CONSUMABLE!"));
+		OnConsumableEffectStartDelegate.Broadcast(NewEffect, ItemID);
 	}
 }
 
@@ -143,15 +186,29 @@ float UEffectsComponent::GetDurationForEffect(FGuid EffectInstanceID)
 TArray<UActiveEffectInstance*> UEffectsComponent::GetConsumableEffects() const
 {
 	TArray<UActiveEffectInstance*> ConsumableEffects;
-	for (UActiveEffectInstance* Effect : ActiveEffects)
+
+	for (int32 i = 0; i < ActiveEffects.Num(); ++i)
 	{
+		UActiveEffectInstance* Effect = ActiveEffects[i];
+
+		if (!IsValid(Effect))
+		{
+			UE_LOG(LogTemp, Error,
+				TEXT("Invalid effect at index %d in ActiveEffects"), i);
+			continue;
+		}
+
+		// Extra safety: check definition integrity
 		if (Effect->CharacterEffectDefinition.Source == EEffectSource::Consumable)
 		{
 			ConsumableEffects.Add(Effect);
 		}
 	}
+
 	return ConsumableEffects;
 }
+
+
 bool UEffectsComponent::IsEffectActiveByInstance(FGuid EffectInstanceID)
 {
 	for (UActiveEffectInstance* Effect : ActiveEffects)
@@ -192,7 +249,7 @@ void UEffectsComponent::SetInventoryComponentLink(UInventoryComponent* Inventory
 {
 	if (InventoryComponent)
 	{
-		InventoryComponent->OnItemConsumedDelegate.AddDynamic(this, &UEffectsComponent::ApplyEffect);
+		InventoryComponent->OnItemConsumedDelegate.AddDynamic(this, &UEffectsComponent::ApplyConsumableEffect);
 	}
 }
 

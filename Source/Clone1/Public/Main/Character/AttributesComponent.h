@@ -70,4 +70,5 @@ public:
 	UDataTable* ItemsDataTable;
 	
 	void SetEquipmentComponentLink(UEquipmentComponent* EquipmentComponent);
+	void SetEffectsComponentLink(UEffectsComponent* EffectsComponent);
 };

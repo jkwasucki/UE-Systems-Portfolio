@@ -25,8 +25,12 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	AttributesComponent->SetEffectsComponentLink(EffectsComponent);
+	
 	// Track health delta change
 	ResourceComponent->OnHealthChangedByDeltaDelegate.AddDynamic(this,&ABaseCharacter::OnRespondToHealthChange);
+	
 	EffectsComponent->OnRequestVFXDelegate.AddDynamic(CharacterVFXComponent, &UCharacterVFXComponent::PlayVFX);
 	EffectsComponent->OnRequestVFXEndDelegate.AddDynamic(CharacterVFXComponent, &UCharacterVFXComponent::StopVFX);
 	

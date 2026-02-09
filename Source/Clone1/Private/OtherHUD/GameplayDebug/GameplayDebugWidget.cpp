@@ -308,7 +308,7 @@ FText UGameplayDebugWidget::FormatEffectDescriptor(FCharacterEffect& Effect)
 
 void UGameplayDebugWidget::ToggleAbilityBox(bool bState)
 {
-	AbilityBox->SetVisibility(bState ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+	AbilityBox->SetVisibility(bState ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
 }
 
 

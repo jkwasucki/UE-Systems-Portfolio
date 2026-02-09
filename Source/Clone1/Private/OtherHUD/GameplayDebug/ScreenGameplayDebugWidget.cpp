@@ -129,7 +129,7 @@ void UScreenGameplayDebugWidget::HandleTargetBox(ABaseCharacter* TargetChar, FEn
 
 void UScreenGameplayDebugWidget::ToggleTargetBox(bool bState)
 {
-	Target_GameplayDebugWidget->SetVisibility(bState ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+	Target_GameplayDebugWidget->SetVisibility(bState ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
 }
 
 void UScreenGameplayDebugWidget::DisableTargetBox()
