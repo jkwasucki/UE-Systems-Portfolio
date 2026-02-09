@@ -42,6 +42,10 @@ void UAbilitySystemComponent::TryUseAbility(UAbilityData* Ability)
 	}
 	else
 	{
+		const UEnum* EnumPtr = StaticEnum<EAbilityFailureReason>();
+		FString ReasonString = EnumPtr ? EnumPtr->GetNameStringByValue((int64)FailureReason) : TEXT("Unknown");
+		
+		UE_LOG(LogTemp, Warning, TEXT("Ability cast failed. Reason: %s"), *ReasonString);
 		OnAbilityCastFailDelegate.Broadcast(Ability,FailureReason);
 	}
 }
@@ -87,7 +91,7 @@ bool UAbilitySystemComponent::Validate(UAbilityData* Ability, FAbilityTargetData
 	if (!Ability)
 		return false;
 
-	
+	GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("1"));
 	float AvailableEnergy = IResourceInterface::Execute_GetEnergy(GetOwner());
 	if (AvailableEnergy < Ability->EnergyCost)
 	{
@@ -96,18 +100,18 @@ bool UAbilitySystemComponent::Validate(UAbilityData* Ability, FAbilityTargetData
 	}
 
 	
-	
+	GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("2"));
 	if (IsOnCooldown(Ability))
 	{
 		OutFailReason = EAbilityFailureReason::OnCooldown;
 		return false;
 	}
 	
-
+	GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("3"));
 	if (!GrantedAbilities.Contains(Ability))
 		return false;
 	
-	
+	GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("4"));
 	//-- RESOLVE TARGETING (STATE MACHINE)
 	if (!ActiveTargetingStrategy ||
 		ActiveTargetingStrategy->GetClass() != Ability->TargetingStrategy)
@@ -155,9 +159,10 @@ void UAbilitySystemComponent::Commit(UAbilityData* Ability)
 
 void UAbilitySystemComponent::Execute(UAbilityData* Ability,FAbilityTargetData& TargetData)
 {
+	GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("5"));
 	UActiveAbilityInstance* NewActiveAbilityInstance = NewObject<UActiveAbilityInstance>(this);
 	NewActiveAbilityInstance->AbilityTag = Ability->Tag;
-	NewActiveAbilityInstance->AbilityInstanceID  = FGuid::NewGuid();
+	NewActiveAbilityInstance->AbilityInstanceID = FGuid::NewGuid();
 	
 	ActiveAbility = NewActiveAbilityInstance;
 	ActiveAbility->OnCastFinishedDelegate.AddLambda([this]()
@@ -185,7 +190,7 @@ void UAbilitySystemComponent::Execute(UAbilityData* Ability,FAbilityTargetData& 
 		if (!EffectClass) continue;
 		
 		UAbilityEffect* Effect = NewObject<UAbilityEffect>(this, EffectClass);
-		
+		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("6"));
 		if (Effect->TryApplyEffect(
 			GetOwner(),
 			TargetData,
@@ -197,6 +202,7 @@ void UAbilitySystemComponent::Execute(UAbilityData* Ability,FAbilityTargetData& 
 	}
 	if (SuccessCount > 0)
 	{
+		
 		OnAbilityCastDelegate.Broadcast(Ability,ActiveAbility->AbilityInstanceID,TargetData);
 		TrackCooldown(Ability);
 	}
@@ -227,4 +233,9 @@ bool UAbilitySystemComponent::IsAbilityActive(FGameplayTag AbilityTag) const
 		return ActiveAbility->AbilityTag == AbilityTag;
 	
 	
+}
+
+TArray<UAbilityData*>& UAbilitySystemComponent::GetGrantedAbilities()
+{
+	return GrantedAbilities;
 }

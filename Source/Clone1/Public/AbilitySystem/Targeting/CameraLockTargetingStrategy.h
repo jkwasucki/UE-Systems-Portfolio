@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Definitions/TargetingStrategy.h"
-#include "DirectAimTargetingStrategy.generated.h"
+#include "CameraLockTargetingStrategy.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class CLONE1_API UDirectAimTargetingStrategy : public UTargetingStrategy
+class CLONE1_API UCameraLockTargetingStrategy : public UTargetingStrategy
 {
 	GENERATED_BODY()
 public:

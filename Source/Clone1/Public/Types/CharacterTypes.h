@@ -27,6 +27,8 @@ enum class EEntityState : uint8
 	Moving,
 	Dead,
 	Casting,
+	Attacking,
+	ObtainingTarget
 };	
 
 DECLARE_DELEGATE_OneParam(FOnStateRequest, EEntityState);

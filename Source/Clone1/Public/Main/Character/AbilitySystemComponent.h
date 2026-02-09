@@ -56,7 +56,7 @@ public:
 	bool IsOnCooldown(UAbilityData* Ability);
 	UFUNCTION()
 	bool IsAbilityActive(FGameplayTag AbilityTag) const;
-	
+	TArray<UAbilityData*>& GetGrantedAbilities();
 	UFUNCTION()
 	void TryUseAbility(UAbilityData* Ability);				// INITIALIZER
 	UFUNCTION()

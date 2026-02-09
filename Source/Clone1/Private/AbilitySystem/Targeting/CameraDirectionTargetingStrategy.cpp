@@ -1,9 +1,12 @@
 ﻿#include "G:\UnrealProjects\Clone1\Intermediate\Build\Win64\x64\Clone1Editor\Development\UnrealEd\SharedPCH.UnrealEd.Project.ValApi.Cpp20.InclOrderUnreal5_3.h"
-#include "AbilitySystem/Targeting/ForwardAimTargetingStrategy.h"
+#include "AbilitySystem/Targeting/CameraDirectionTargetingStrategy.h"
 
 
-EAbilityTargetingStatus UForwardAimTargetingStrategy::TryResolveTargeting_Implementation(AActor* Instigator,
-	FAbilityIndicatorData& IndicatorData, FCustomTargetingRules& CustomTargetingRules, FAbilityTargetData& OutTargetData)
+EAbilityTargetingStatus UCameraDirectionTargetingStrategy::TryResolveTargeting_Implementation(
+	AActor* Instigator,
+	FAbilityIndicatorData& IndicatorData,
+	FCustomTargetingRules& CustomTargetingRules,
+	FAbilityTargetData& OutTargetData)
 {
 	FAbilityTargetData Data;
 
@@ -48,11 +51,10 @@ EAbilityTargetingStatus UForwardAimTargetingStrategy::TryResolveTargeting_Implem
 
 	FVector AimPoint = bHit ? Hit.ImpactPoint : TraceEnd;
 
-	
 	FVector MuzzleLocation = Instigator->GetActorLocation();
 	Data.Direction = (AimPoint - MuzzleLocation).GetSafeNormal();
 	Data.bHasValidTarget = true;
-	
+
 	// DEBUG
 	DrawDebugLine(
 		Instigator->GetWorld(),
@@ -62,7 +64,8 @@ EAbilityTargetingStatus UForwardAimTargetingStrategy::TryResolveTargeting_Implem
 		false,
 		2.f
 	);
-	
+
 	OutTargetData = Data;
 	return EAbilityTargetingStatus::Confirmed;
 }
+

@@ -20,8 +20,15 @@ AAbilityProjectile::AAbilityProjectile()
 	SetRootComponent(Collider);
 	Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	Collider->SetGenerateOverlapEvents(true);
-	Collider->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
-	Collider->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+	Collider->SetCollisionObjectType(ECC_WorldDynamic);
+
+	// Ignore everything first
+	Collider->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+	// Only overlap pawns
+	Collider->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
 	Collider->SetMobility(EComponentMobility::Movable);
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &AAbilityProjectile::OnOverlapped);
 	
@@ -50,6 +57,14 @@ void AAbilityProjectile::OnOverlapped(UPrimitiveComponent* OverlappedComponent, 
 	{
 		return;
 	}
+	
+	// Ignore AI trigger spheres
+	if (OtherComp && OtherComp->GetCollisionObjectType() == ECC_GameTraceChannel3)
+	{
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Hit component: %s"), *OtherComp->GetName());
+	
 	Collider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	ProjectileMoverComponent->Stop();

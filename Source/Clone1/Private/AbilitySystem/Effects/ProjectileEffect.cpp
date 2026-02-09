@@ -4,19 +4,32 @@
 #include "AbilitySystem/Effects/ProjectileEffect.h"
 
 
-bool UProjectileEffect::TryApplyEffect_Implementation(AActor* Instigator, FAbilityTargetData& TargetData, FGuid AbilityInstanceID)
+bool UProjectileEffect::TryApplyEffect_Implementation(
+	AActor* Instigator,
+	FAbilityTargetData& TargetData,
+	FGuid AbilityInstanceID)
 {
-	if (!Instigator) return false;
-	UWorld* World = Instigator->GetWorld();
-	if (!World) return false;
-	
-	AMainCharacter* Char = Cast<AMainCharacter>(Instigator->GetInstigator());
-	if (!Char) return false;
+	if (!Instigator)
+		return false;
 
-	FTransform SpawnTransform = Char->AbilityProjectileSpawnPoint->GetComponentTransform();
+	UWorld* World = Instigator->GetWorld();
+	if (!World)
+		return false;
+
+	FTransform SpawnTransform = Instigator->GetActorTransform();
+
+	// Try to use a projectile spawn point if available
+	if (AMainCharacter* Char = Cast<AMainCharacter>(Instigator))
+	{
+		if (Char->AbilityProjectileSpawnPoint)
+		{
+			SpawnTransform = Char->AbilityProjectileSpawnPoint->GetComponentTransform();
+		}
+	}
+
 	FActorSpawnParameters Params;
-	Params.Owner = Char;
-	Params.Instigator = Char;
+	Params.Owner = Instigator;
+	Params.Instigator = Cast<APawn>(Instigator);
 	Params.SpawnCollisionHandlingOverride =
 		ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
@@ -26,11 +39,13 @@ bool UProjectileEffect::TryApplyEffect_Implementation(AActor* Instigator, FAbili
 			SpawnTransform,
 			Params
 		);
-	if (!Projectile) return false;
-	
+
+	if (!Projectile)
+		return false;
+
 	ProjectileData.InflictedOnHitEffects = InflictedOnHitEffects;
-	
-	Projectile->InitializeProjectile(Instigator,ProjectileData, TargetData);
+
+	Projectile->InitializeProjectile(Instigator, ProjectileData, TargetData);
 
 	return true;
 }

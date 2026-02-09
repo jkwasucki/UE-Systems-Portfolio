@@ -75,6 +75,12 @@ void ABaseCharacter::EffectAppearedDebugSnapshot(UActiveEffectInstance* EffectIn
 	OnEffectAppearDebugSnapshotDelegate.Broadcast(Snapshot);
 }
 
+void ABaseCharacter::CleanupVisuals(const FGuid& Identifier)
+{
+	GetCharacterAnimationComponent()->StopCurrentMontage();
+	GetCharacterVFXComponent()->StopVFX(Identifier);
+}
+
 void ABaseCharacter::Die()
 {
 	if (!bIsAlive) return;
@@ -170,6 +176,11 @@ UCharacterVFXComponent* ABaseCharacter::GetCharacterVFXComponent()
 UCharacterMoverComponent* ABaseCharacter::GetCharacterMoverComponent()
 {
 	return CharacterMoverComponent;	
+}
+
+EEntityState ABaseCharacter::GetState()
+{
+	return  EntityState;
 }
 
 void ABaseCharacter::OnRespondToHealthChange(float Delta)

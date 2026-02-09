@@ -65,6 +65,9 @@ public:
 	UEffectsComponent* EffectsComponent;						// Character Effects 
 	
 	
+	UFUNCTION()
+	void CleanupVisuals(const FGuid& Identifier);
+	
 	
 	
 	
@@ -113,6 +116,8 @@ public:
 	UCharacterVFXComponent* GetCharacterVFXComponent();
 	UFUNCTION()
 	UCharacterMoverComponent* GetCharacterMoverComponent();
+	UFUNCTION()
+	EEntityState  GetState();
 	UFUNCTION()
 	bool IsEnemy();
 	UFUNCTION()

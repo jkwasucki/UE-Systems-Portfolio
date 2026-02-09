@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Targeting/DirectAimTargetingStrategy.h"
+#include "AbilitySystem/Targeting/CameraLockTargetingStrategy.h"
 
 #include "Interfaces/CharacterEffectReciverInterface.h"
 
 EAbilityTargetingStatus
-UDirectAimTargetingStrategy::TryResolveTargeting_Implementation(
+UCameraLockTargetingStrategy::TryResolveTargeting_Implementation(
 	AActor* Instigator,
 	FAbilityIndicatorData& IndicatorData,
 	FCustomTargetingRules& CustomTargetingRules,

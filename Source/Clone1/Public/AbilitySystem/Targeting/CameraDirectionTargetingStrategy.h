@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "AbilitySystem/Definitions//TargetingStrategy.h"
 #include "Structs/FAbilityTargetData.h"
-#include "ForwardAimTargetingStrategy.generated.h"
+#include "CameraDirectionTargetingStrategy.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class CLONE1_API UForwardAimTargetingStrategy : public UTargetingStrategy
+class CLONE1_API UCameraDirectionTargetingStrategy : public UTargetingStrategy
 {
 	GENERATED_BODY()
 	

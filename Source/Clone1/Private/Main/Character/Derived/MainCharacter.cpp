@@ -85,8 +85,10 @@ void AMainCharacter::BeginPlay()
 		GetAbilitySystem()->OnStateRequestDelegate.BindUObject(this,&ABaseCharacter::SetState);
 		AbilitySystemComponent->OnAbilityCastDelegate.AddDynamic(this, &AMainCharacter::ApplyAbilityVisuals);
 		AbilitySystemComponent->OnAbilityAbortedDelegate.AddDynamic(this, &AMainCharacter::CleanupAbilityVisuals);
+		
 		AbilitySystemComponent->OnBeginCastDelegate.AddDynamic(GetCharacterMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
 		AbilitySystemComponent->OnEndCastDelegate.AddDynamic(GetCharacterMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
+		
 		AbilitySystemComponent->OnAbilityCastDelegate.AddDynamic(this, &AMainCharacter::AbilityCastDebugSnapshot);
 		AbilitySystemComponent->OnAbilityCastFailDelegate.AddDynamic(this, &AMainCharacter::AbilityCastFailDebugSnapshot);
 	}
@@ -113,8 +115,7 @@ void AMainCharacter::ApplyAbilityVisuals(UAbilityData* Ability,  FGuid InstanceI
 
 void AMainCharacter::CleanupAbilityVisuals(AActor* AbilityOwner, const FGuid& Identifier)
 {
-	GetCharacterAnimationComponent()->StopCurrentMontage();
-	GetCharacterVFXComponent()->StopVFX(Identifier);
+	CleanupVisuals(Identifier);
 }
 
 
