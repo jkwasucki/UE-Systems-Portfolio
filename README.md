@@ -317,9 +317,18 @@ A modular **Pacman gameplay system** built in **Unreal Engine (C++)**, designed 
 # Inventory & Equipment System (Unreal Engine C++)
 
 
-| | | |
-|:-:|:-:|:-:|
-| <img src="https://github.com/user-attachments/assets/0bd55781-4334-4958-bd8d-9648aef3b063" width="300" /> | <img src="https://github.com/user-attachments/assets/9e383b14-2201-4c58-bede-aa96bba944b7" width="300" /> | <img src="https://github.com/user-attachments/assets/68d0fc09-b906-40b3-a9c1-f3bf0f74d350" width="300" /> |
+<p align="center">
+  <img src="assets/Consumable-optimized.gif" width="30%" />
+  <img src="assets/Handling-optimized.gif" width="30%" />
+
+</p>
+
+<p align="center">
+    <img src="assets/Equip-optimized.gif" width="30%" />
+  <img src="assets/Dropping-optimized.gif" width="30%" />
+
+</p>
+
 
 
 
