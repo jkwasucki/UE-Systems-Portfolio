@@ -6,6 +6,146 @@
 
 ---
 
+# Ability System (Unreal Engine C++)
+
+A lightweight, modular **Ability + Effects framework** built in Unreal Engine C++, designed around **clear ownership**, **data-driven definitions**, and **event-driven execution**.  
+Instead of using GAS, this system focuses on readable gameplay architecture: **abilities are defined as assets**, executed through a central component, and resolved via **targeting strategies** and **runtime effect instances**.
+
+---
+
+<p align="center">
+  <img src="assets/SpeedBuff-optimized.gif" width="30%" />
+  <img src="assets/Projectile2-ezgif.com-speed.gif" width="30%" />
+  <img src="assets/Revive-optimized.gif" width="30%" />
+</p>
+
+<p align="center">
+  <img src="assets/AOE-optimized.gif" width="30%" />
+  <img src="assets/Energy-optimized.gif" width="30%" />
+</p>
+
+
+## Core Architecture
+
+- **`UAbilitySystemComponent`** is the gameplay authority:
+  - owns granted abilities
+  - validates activation (resources, cooldowns, targeting)
+  - commits costs
+  - executes effects and broadcasts gameplay events
+- **Abilities are data-driven** using `UAbilityData` (`UPrimaryDataAsset`):
+  - gameplay tag identity
+  - cast mode / cast time
+  - cooldown + energy cost
+  - targeting strategy + indicator data
+  - list of effect classes to execute
+- **Targeting is strategy-based** (`UTargetingStrategy`):
+  - interchangeable targeting implementations (self, forward aim, direct aim, manual AOE)
+  - optional per-frame targeting updates (ticks only while targeting)
+  - returns `FAbilityTargetData` used by effects
+- **Execution uses runtime instances**, not one-off calls:
+  - `UActiveAbilityInstance` tracks casting and supports aborting
+  - `UActiveEffectInstance` manages timed and overtime effects
+
+---
+
+## Ability Flow
+
+1. **TryUseAbility**
+2. **Validate**
+   - resource check via `IResourceInterface`
+   - cooldown check (tracked per ability asset)
+   - targeting resolution (strategy state machine)
+3. **Commit**
+   - consume energy cost
+4. **Execute**
+   - create `UActiveAbilityInstance` (cast lifecycle)
+   - apply each `UAbilityEffect` to resolved targets
+   - track cooldown and broadcast events
+   - refund cost and fail if nothing successfully applied
+
+---
+
+## Effects System
+
+- **`UEffectsComponent`** owns all active effects on the character:
+  - stores `UActiveEffectInstance` objects
+  - supports duration and overtime ticks
+  - supports external cancel (ability aborted)
+  - broadcasts UI/VFX events
+- **Effects are instance-driven**:
+  - `UActiveEffectInstance` applies and reverts attribute/resource deltas
+  - uses timers for duration and overtime ticks
+  - removes itself cleanly and notifies the owner component
+- Supports **cross-actor ownership**:
+  - if an effect originates from another actor, the receiver listens for ability abort and cleans up correctly
+
+---
+
+## Debug & Development Tools
+<p align="left" style="margin-bottom: 100px;">
+  <img src="assets/Debug1.png" width="300" style="vertical-align: top;" />
+  <img src="assets/Debug2.png" width="300" style="vertical-align: top;" />
+</p>
+
+<p align="left">
+  <em>Player (Owner) (left), Target (Enemy/Ally) (Right).</em>
+</p>
+
+Built-in gameplay debug HUD showing:
+
+- entity state
+- resources
+- attributes
+- active abilities
+- active effects
+
+Debug data is provided through **structured snapshot objects**, not direct widget queries.
+
+This allows quick verification of gameplay state during:
+
+- ability casts
+- damage events
+- effect application
+---
+## Example Implementations
+
+- **Projectile Effect**  
+  Spawns a projectile actor and initializes it with targeting payload.
+
+- **Area Effect**  
+  Spawns an area occurrence actor and applies nested on-hit effects.
+
+- **Manual AOE Targeting**  
+  Real-time indicator placement driven by camera traces and range clamping.
+
+---
+
+## Design Principles
+
+- **Ownership first**: gameplay state lives in components, UI/VFX respond via delegates
+- **Data over hardcode**: ability behavior defined through assets and effect classes
+- **Composable execution**: abilities run modular effect blocks
+- **No GAS dependency**: architecture stays understandable and debuggable while still scalable
+
+---
+
+## What I Learned
+
+- How to structure a custom ability framework using **asset-defined abilities** and runtime **instance objects** for clean lifecycle control.
+- How to design targeting as a **pluggable strategy system**, including tick-driven targeting modes.
+- How to keep abilities **data-driven**, while still allowing complex behavior through composable effect classes (projectile, AOE, nested on-hit effects).
+- How to model timed gameplay logic using **timers and explicit state**, including cast windows, abort logic, and overtime effects.
+- How to build clean gameplay/UI boundaries by using **delegates as the contract** between systems and presentation layers.
+
+
+---
+
+---
+
+---
+
+
+
 # Pacman (Unreal Engine C++)
 
 
@@ -91,3 +231,11 @@ Gameplay logic lives entirely in **Actor Components**, while the UI layer acts a
 - How to structure large UMG systems using **orchestrator widgets**, preventing tight coupling between individual UI elements.
 - How to handle complex player interactions (drag & drop, split stacks, context menus) as **deterministic gameplay flows**, not ad-hoc UI behavior.
 - How to balance feature-rich UI with **maintainable gameplay architecture** in Unreal Engine.
+
+---
+
+---
+
+---
+
+
