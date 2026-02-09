@@ -6,6 +6,134 @@
 
 ---
 
+## Character & Combat Core (Unreal Engine C++)
+
+The project uses a modular, component-driven character architecture where all gameplay behavior is handled through dedicated systems instead of monolithic character classes.
+
+
+<p align="center">
+  <img src="assets/Fight1.gif" width="50%" />
+  <img src="assets/Fight2.gif" width="50%" />
+</p>
+
+
+### Core Character Structure
+
+Each character is built around a `BaseCharacter` class that owns independent gameplay components:
+
+- **ResourceComponent**  
+  Handles health and energy with event-driven updates.
+
+- **AttributesComponent**  
+  Stores base and bonus attributes (attack, armor, speed, etc.).  
+  Supports modifiers from equipment and effects.
+
+- **EffectsComponent**  
+  Manages active gameplay effects:
+  - instant effects
+  - duration-based effects
+  - overtime effects
+  - stackable and non-stackable logic
+  - automatic revert on failure or expiration
+
+- **AbilitySystemComponent**  
+  Responsible for:
+  - ability validation (energy, cooldown, targeting)
+  - cast state handling
+  - effect execution
+  - cooldown tracking
+
+- **CharacterMoverComponent**  
+  Handles movement overrides and speed modifiers.
+
+- **CharacterAnimationComponent**  
+  Plays animations driven by gameplay events.
+
+- **CharacterVFXComponent**  
+  Spawns and manages visual effects tied to abilities and status effects.
+
+---
+
+### Event-Driven Gameplay Flow
+
+Systems communicate through delegates instead of direct coupling.
+
+**Example ability flow:**
+
+1. Input or AI requests ability use.
+2. AbilitySystem validates:
+   - energy cost
+   - cooldown
+   - targeting
+3. Ability enters cast state.
+4. On cast completion:
+   - effects are applied to targets
+   - cooldown is started
+   - animations and VFX are triggered
+5. Effects modify:
+   - resources
+   - attributes
+6. Effects expire or are aborted automatically.
+
+---
+
+### Shared Player & Enemy Logic
+
+Both player and enemy characters use the same systems:
+
+- `AbilitySystemComponent`
+- `EffectsComponent`
+- `AttributesComponent`
+- `ResourceComponent`
+
+The enemy uses a simple `EnemyAIComponent` that:
+
+- detects targets using a trigger sphere
+- switches between idle and attacking states
+- uses the same ability pipeline as the player
+
+This ensures:
+
+- no duplicated combat logic
+- consistent behavior between AI and player
+- easier extension for new enemy types
+
+---
+
+### Character States
+
+Characters operate on a simple gameplay state model:
+
+- Idle
+- Casting
+- Attacking
+- Dead
+
+State changes are driven by:
+
+- ability casting
+- movement logic
+- death/resurrection events
+
+### What I Learned
+
+- **Component-driven architecture**  
+  Splitting character logic into independent components (abilities, effects, attributes, resources, movement, animation) makes systems easier to extend and reuse across player and AI characters.
+
+- **Shared player and AI pipelines**  
+  Both player and enemy characters use the same ability and effect systems, preventing duplicated combat logic.
+
+- **Debug-first development**  
+  Building a structured gameplay debug HUD helped quickly verify state transitions, effect stacking, resource changes, and ability execution during development.
+
+
+---
+
+---
+
+---
+
+
 # Ability System (Unreal Engine C++)
 
 A lightweight, modular **Ability + Effects framework** built in Unreal Engine C++, designed around **clear ownership**, **data-driven definitions**, and **event-driven execution**.  
