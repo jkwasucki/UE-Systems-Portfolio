@@ -16,20 +16,17 @@ protected:
 	UPROPERTY()
 	bool bIsMoving = false;
 public:	
-	// Sets default values for this component's properties
-	UCharacterMoverComponent();
-	
 	UPROPERTY(EditDefaultsOnly, Category="Movement")
 	float BaseWalkSpeed = 600.f;
 	UPROPERTY(EditDefaultsOnly, Category="Movement")
 	float WeightStrengthMultiplier = 4.0f;
 	
-	
 	float WeightSpeedMultiplier = 1.0;
 	float AttributeSpeedMultiplier = 1.0f;
-	
 	FOnStateRequest OnStateRequestDelegate;
-	
+
+public:
+	UCharacterMoverComponent();
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	UFUNCTION()
 	void ToggleMovement(bool bState);

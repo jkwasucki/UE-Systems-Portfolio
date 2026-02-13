@@ -96,10 +96,9 @@ const FItemBaseData& UAttributesComponent::GetBaseItemData(FName ItemID)
 
 bool UAttributesComponent::IsAnyBuffActiveForAttribute(EAttribute Attribute)
 {
-	if (!IsValid(EffectsComponent))
-	{
+	if (!EffectsComponent.IsValid())
 		return false;
-	}
+	
 	TArray<UActiveEffectInstance*> Effects = EffectsComponent->GetConsumableEffects();
 	
 	for ( UActiveEffectInstance* Effect : Effects)

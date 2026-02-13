@@ -27,6 +27,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 	FText GetActionKeyString();
 	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+	bool IsInteractedWith();
+	
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
 	void Highlight(bool bState);
 	

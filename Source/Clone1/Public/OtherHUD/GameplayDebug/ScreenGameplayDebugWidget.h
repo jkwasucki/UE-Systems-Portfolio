@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayDebugWidget.h"
+#include "CoreAndAbilityDebugWidget.h"
+#include "QuestDebugWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Structs/FGameplayDebugSnapshot.h"
 #include "ScreenGameplayDebugWidget.generated.h"
@@ -29,10 +30,14 @@ public:
 	
 	
 	UPROPERTY(meta=(BindWidget))
-	UGameplayDebugWidget* Self_GameplayDebugWidget;
+	UCoreAndAbilityDebugWidget* Self_GameplayDebugWidget;
 	UPROPERTY(meta=(BindWidget))
-	UGameplayDebugWidget* Target_GameplayDebugWidget;
+	UCoreAndAbilityDebugWidget* Target_GameplayDebugWidget;
+	UPROPERTY(meta=(BindWidget))
+	UQuestDebugWidget* QuestDebugWidget;
 	
+	
+	// AbilityAndCore Widget
 	UFUNCTION()
 	void HandleTargetBox(ABaseCharacter* TargetChar,FEntityGameplayDebugSnapshot Snapshot);
 	UFUNCTION()
@@ -50,4 +55,5 @@ public:
 	void UnsubscribeFromTarget();
 	UFUNCTION()
 	void Init(AMainPlayerController* PC);
+	
 };

@@ -6,12 +6,12 @@
 #include "GameFramework/Actor.h"
 #include "Structs/FItemStack.h"
 #include "Interfaces/InteractableInterface.h"
-#include "Components/InteractableComponent.h"
+#include "Components/ActorInteractionComponent.h"
 #include "Components/SphereComponent.h"
 #include "Item.generated.h"
 
 UCLASS()
-class CLONE1_API AItem : public AActor
+class CLONE1_API AItem : public AActor, public IInteractableInterface
 {
 	GENERATED_BODY()
 	
@@ -23,8 +23,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-	UPROPERTY()
-	UInteractableComponent* InteractableComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UActorInteractionComponent* InteractableComponent;
 	UFUNCTION()
 	void OnInteract(ACharacter* Char);
 	UFUNCTION()
@@ -59,4 +59,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void InitItem(const FItemStack& InStack);
+	
+	virtual FText GetActionText_Implementation()  override;
+	virtual FText GetActionKeyString_Implementation()  override;
+	
+	virtual void Interact_Implementation(ACharacter* Character) override;
+	virtual void Highlight_Implementation(bool bState) override;
+	virtual bool IsInteractedWith_Implementation() override;
 };

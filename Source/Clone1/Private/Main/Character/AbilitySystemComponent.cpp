@@ -27,6 +27,23 @@ void UAbilitySystemComponent::TickComponent(float DeltaTime, enum ELevelTick Tic
 }
 
 
+void UAbilitySystemComponent::ResolveAbilityInput(UAbilityData* AbilityData,EAbilityInputEvent Event)
+{
+	
+	switch (Event)
+	{
+	case  EAbilityInputEvent::Completed:
+		{
+			TryAbortAbility(AbilityData);			
+			break;
+		}
+	case  EAbilityInputEvent::Started:
+		{
+			TryUseAbility(AbilityData);
+			break;
+		}
+	}
+}
 
 void UAbilitySystemComponent::TryUseAbility(UAbilityData* Ability)
 {

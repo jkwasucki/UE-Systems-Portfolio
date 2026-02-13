@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "OtherHUD/GameplayDebug/ScreenGameplayDebugWidget.h"
-#include "Components/InteractableComponent.h"
 #include "OtherHUD/InteractionTooltipWidget.h"
 #include "Inventory/HUD/InventoryScreenWidget.h"
 #include "Components/ActorComponent.h"
@@ -18,21 +17,15 @@ class CLONE1_API UHUDComponent : public UActorComponent
 	GENERATED_BODY()
 
 protected:
-	virtual void BeginPlay() override;
+	
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
 	UPROPERTY()
-	UInteractableComponent* FocusedActorComponent = nullptr;
-	
+	TWeakObjectPtr<AActor> CurrentInteractable = nullptr;
 	
 public:	
-	UHUDComponent();
-	
-	
 	UPROPERTY()
-	AMainPlayerController* PC = nullptr;
-	
-	// SUBCLASSES
+	TWeakObjectPtr<AMainPlayerController> PC;
+
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
 	TSubclassOf<UInventoryScreenWidget> InventoryScreenHUDComponent;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
@@ -49,18 +42,26 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UScreenGameplayDebugWidget* ScreenGameplayDebugWidget = nullptr;
 	
+
+public:
+	UHUDComponent();
+	
+	UFUNCTION()
+	void Init(AMainPlayerController* InPC);
+	
+	UFUNCTION()
+	void OnNewInteractable(AActor* Interactable);
+	UFUNCTION()
+	void OnToggleInventory();
 	
 	UFUNCTION()
 	void SetupHUD();
 	
 	UFUNCTION()
-	void ToggleInventory();
-	
-	UFUNCTION()
 	void HandleInteractionTooltip();
 	
 	UFUNCTION()
-	void ShowInteractionTooltip(UInteractableComponent* inFocusedActor);
+	void ShowInteractionTooltip(AActor* inFocusedActor);
 	
 	UFUNCTION()
 	void HideInteractionTooltip();
@@ -70,6 +71,7 @@ public:
 	
 	UFUNCTION()
 	void UpdateInteractableTooltipLocation();
+	
 };
 
 

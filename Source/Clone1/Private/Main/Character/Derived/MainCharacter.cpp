@@ -9,15 +9,17 @@
 #include "Equipment/EquipmentComponent.h"
 #include "Main/Character/AttributesComponent.h"
 #include "Main/PlayerController/MainPlayerController.h"
+#include "EnhancedInputComponent.h"
 #include "Structs/FAnimationTags.h"
-#include "Structs/FGameplayDebugSnapshot.h"
+#include "Main/Character/InteractionComponent.h"
+#include "WeaponSystem/WeaponSystemComponent.h"
+#include "Main/Character/CharacterDebugComponent.h"
+
 
 AMainCharacter::AMainCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
-	
 	
 	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HeadMesh"));
 	HeadMesh->SetupAttachment(GetMesh());
@@ -35,10 +37,17 @@ AMainCharacter::AMainCharacter()
 	FeetMesh->SetupAttachment(GetMesh());
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AbilitySystemComponent");
-
-	
 	AbilityProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("AbilityProjectileSpawnPoint"));
 
+	WeaponSystemComponent = CreateDefaultSubobject<UWeaponComponent>("WeaponSystemComponent");
+	WeaponSystemComponent->SetComponentTickEnabled(true);
+	
+	CharacterInputComponent = CreateDefaultSubobject<UCharacterInputComponent>(TEXT("InputComponent"));
+	
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
+	InteractionComponent->SetComponentTickEnabled(true);
+	
+	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>("WeaponMesh");
 	
 	SetSkeletalDefaults(HeadMesh);
 	SetSkeletalDefaults(ChestMesh);
@@ -58,66 +67,86 @@ void AMainCharacter::BeginPlay()
 	
 	if (AMainPlayerState* PS = GetPlayerState<AMainPlayerState>())
 	{
-		if (AMainPlayerController* PC = Cast<AMainPlayerController>( PS->GetPlayerController()))
-		{
-			PC->InputHandlerComponent->OnAbilityInputDelegate.AddDynamic(this, &AMainCharacter::ResolveAbilityInput);
-		}
-		
 		if (PS->InventoryComponent)
 		{
-			PS->InventoryComponent->OnWeightChangeDelegate.AddDynamic(GetCharacterMoverComponent(), &UCharacterMoverComponent::ModifySpeedByWeight);
+			PS->InventoryComponent->OnWeightChangeDelegate.AddDynamic(GetMoverComponent(), &UCharacterMoverComponent::ModifySpeedByWeight);
 			PS->EquipmentComponent->OnItemEquippedDelegate.AddDynamic(this, &AMainCharacter::EquipMesh);
 			PS->EquipmentComponent->OnItemUnequippedDelegate.AddDynamic(this,  &AMainCharacter::UnEquipMesh);
 		}
-		
-		
-		
-		GetAttributesComponent()->SetEquipmentComponentLink(PS->EquipmentComponent);
-		GetAttributesComponent()->OnAttributesChangedDelegate.AddDynamic(this, &AMainCharacter::ApplyAttributes);
 		
 		// SET COMPONENT LINKS
 		GetEffectsComponent()->SetInventoryComponentLink(PS->InventoryComponent);
 		GetEffectsComponent()->SetAttributesComponentLink(GetAttributesComponent());
 		GetEffectsComponent()->SetAbilitySystemComponentLink(AbilitySystemComponent);
+		GetAttributesComponent()->SetEquipmentComponentLink(PS->EquipmentComponent);
 		
 		// ABILITIES
 		AbilitySystemComponent->GrantAbilities(PS->GetAbilities()); 
 		GetAbilitySystem()->OnStateRequestDelegate.BindUObject(this,&ABaseCharacter::SetState);
 		AbilitySystemComponent->OnAbilityCastDelegate.AddDynamic(this, &AMainCharacter::ApplyAbilityVisuals);
 		AbilitySystemComponent->OnAbilityAbortedDelegate.AddDynamic(this, &AMainCharacter::CleanupAbilityVisuals);
+		AbilitySystemComponent->OnBeginCastDelegate.AddDynamic(GetMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
+		AbilitySystemComponent->OnEndCastDelegate.AddDynamic(GetMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
+		AbilitySystemComponent->OnAbilityCastDelegate.AddDynamic(GetDebugComponent(), &UCharacterDebugComponent::AbilityCastDebugSnapshot);
+		AbilitySystemComponent->OnAbilityCastFailDelegate.AddDynamic(GetDebugComponent(), &UCharacterDebugComponent::AbilityCastFailDebugSnapshot);
 		
-		AbilitySystemComponent->OnBeginCastDelegate.AddDynamic(GetCharacterMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
-		AbilitySystemComponent->OnEndCastDelegate.AddDynamic(GetCharacterMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
-		
-		AbilitySystemComponent->OnAbilityCastDelegate.AddDynamic(this, &AMainCharacter::AbilityCastDebugSnapshot);
-		AbilitySystemComponent->OnAbilityCastFailDelegate.AddDynamic(this, &AMainCharacter::AbilityCastFailDebugSnapshot);
 	}
+	
+	GetAttributesComponent()->OnAttributesChangedDelegate.AddDynamic(this, &AMainCharacter::ApplyAttributes);
+	// INPUT
+	CharacterInputComponent->OnAbilityInputDelegate.AddDynamic(this, &AMainCharacter::OnAbilityInput);
+	CharacterInputComponent->OnInteractDelegate.AddDynamic(this, &AMainCharacter::OnInteractInput);
+	// Initialize Interaction Component
+	InteractionComponent->Init(this);
+	
+	
+	WeaponMesh->SetupAttachment(GetRootComponent());;
 }
 
+void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	UEnhancedInputComponent* EI =
+		CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+	
+	AMainPlayerController* PC = Cast<AMainPlayerController>(GetController());
+	// Initialize Input Component
+	CharacterInputComponent->Init(PC,EI);
+	
+}
 
 // ABILITY VISUALS HANDLING
 void AMainCharacter::ApplyAbilityVisuals(UAbilityData* Ability,  FGuid InstanceID,  FAbilityTargetData& Targets)
 {
 	if (!Ability)
 		return;
-	GetCharacterAnimationComponent()->PlayAnimation(Ability->AnimationData);
-	if (!GetCharacterMoverComponent()->IsCharacterMoving())
+	GetAnimationComponent()->PlayAnimation(Ability->AnimationData);
+	if (!GetMoverComponent()->IsCharacterMoving())
 	{
-		
-		GetCharacterAnimationComponent()->RequestRotate(Targets.Direction);
+		GetAnimationComponent()->RequestRotate(Targets.Direction);
 	}
 	
 	for (FVFXData VFX : Ability->VFXData)
 	{
-		GetCharacterVFXComponent()->PlayVFX(VFX, InstanceID);
+		GetVFXComponent()->PlayVFX(VFX, InstanceID);
 	}
 }
-
 void AMainCharacter::CleanupAbilityVisuals(AActor* AbilityOwner, const FGuid& Identifier)
 {
 	CleanupVisuals(Identifier);
 }
 
+// WEAPON VISUALS HANDLING
+void AMainCharacter::DisplayWeaponVisuals(UWeaponInstance* WeaponInstance)
+{
+	if (!IsValid(WeaponInstance)) return;
+	UStaticMesh* FoundMesh = WeaponInstance->GetWeaponDefinition()->Mesh.LoadSynchronous();
+	if (!FoundMesh) return;
+	WeaponMesh->SetStaticMesh(FoundMesh);
+}
+void AMainCharacter::OnWeaponInput(EWeaponInputCommand Command)
+{
+}
 
 // RESOURCE INTERFACE
 float AMainCharacter::GetEnergy_Implementation() const
@@ -137,6 +166,8 @@ void AMainCharacter::ModifyHealth_Implementation(float Delta)
 	ResourceComponent->UpdateHealth(Delta);
 }
 
+
+
 void AMainCharacter::TakeDamage_Implementation(float Delta)
 {
 	if (!bIsAlive) return;
@@ -145,7 +176,7 @@ void AMainCharacter::TakeDamage_Implementation(float Delta)
 	if (HealthLeft <= 0)
 		Die();
 	else
-		CharacterAnimationComponent->PlayAnimationByTag(FAnimationTags::Animation_CharacterHit);
+		AnimationComponent->PlayAnimationByTag(FAnimationTags::Animation_CharacterHit);
 }
 
 void AMainCharacter::ApplyEffect_Implementation(AActor* EffectOrigin, FCharacterEffect& Effect, FGuid SourceInstanceID)
@@ -154,13 +185,6 @@ void AMainCharacter::ApplyEffect_Implementation(AActor* EffectOrigin, FCharacter
 }
 
 
-
-
-// Called to bind functionality to input
-void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
 
 
 
@@ -172,29 +196,25 @@ void AMainCharacter::TryUseAbility(FGameplayTag SlotTag)
 		AbilitySystemComponent->TryUseAbility(Ability);
 	}
 }
-void AMainCharacter::ResolveAbilityInput(FGameplayTag SlotTag,EAbilityInputEvent Event)
-{
-	UAbilityData* Ability = GetPlayerState<AMainPlayerState>()->GetAbilityBySlot(SlotTag);
-	if (!Ability) return;
-	
-	switch (Event)
-	{
-	case  EAbilityInputEvent::Completed:
-		{
-			AbilitySystemComponent->TryAbortAbility(Ability);			
-			break;
-		}
-	case  EAbilityInputEvent::Started:
-		{
-			AbilitySystemComponent->TryUseAbility(Ability);
-			break;
-		}
-	}
-}
+
 UAbilitySystemComponent* AMainCharacter::GetAbilitySystem()
 {
 	return AbilitySystemComponent;
 }
+UWeaponComponent* AMainCharacter::GetWeaponSystem()
+{
+	return WeaponSystemComponent;
+}
+UCharacterInputComponent* AMainCharacter::GetCharacterInput()
+{
+	return CharacterInputComponent;
+}
+
+UInteractionComponent* AMainCharacter::GetInteractionComponent()
+{
+	return InteractionComponent;
+}
+
 UAbilitySystemComponent* AMainCharacter::GetAbilitySystemComponent_Implementation()
 {
 	return GetAbilitySystem();
@@ -258,68 +278,28 @@ void AMainCharacter::UnEquipMesh(EEquipmentType Type)
 	}
 }
 
-
-
-
 void AMainCharacter::ApplyAttributes()
 {
-	GetCharacterMoverComponent()->AttributeSpeedMultiplier = 1.0f;
+	GetMoverComponent()->AttributeSpeedMultiplier = 1.0f;
 	
 	float SpeedAttributeValue = GetAttributesComponent()->GetFinalAttributeValue(EAttribute::Speed);
 	float NormalizedSpeed = SpeedAttributeValue / GetAttributesComponent()->MaxSpeedAttribute;
-	GetCharacterMoverComponent()->AttributeSpeedMultiplier = 1.0f + NormalizedSpeed; 
+	GetMoverComponent()->AttributeSpeedMultiplier = 1.0f + NormalizedSpeed; 
 	
-	GetCharacterMoverComponent()->UpdateSpeed();
+	GetMoverComponent()->UpdateSpeed();
 }
 
-
-void AMainCharacter::AbilityCastDebugSnapshot(UAbilityData* Ability, FGuid InstanceID, FAbilityTargetData& Targets)
+void AMainCharacter::OnAbilityInput(FGameplayTag SlotTag, EAbilityInputEvent Event)
 {
+	UAbilityData* Ability = GetPlayerState<AMainPlayerState>()->GetAbilityBySlot(SlotTag);
 	if (!Ability) return;
-	FAbilityDebugSnapshot Snapshot;
 	
-	Snapshot.AbilityInstanceID = InstanceID;
-	Snapshot.Cooldown = Ability->Cooldown;
-	Snapshot.EnergyCost = Ability->EnergyCost;
-	Snapshot.AnimationMode = Ability->AnimationData.AnimationMode;
-	Snapshot.bLocksMovement = Ability->AnimationData.bBlocksMovement;
-	Snapshot.TargetingStrategy = Ability->TargetingStrategy->GetName();
-	Snapshot.AbilityTag = Ability->Tag;
-	Snapshot.AbilityCastMode = Ability->AbilityCastMode;
-	
-	if (Ability->Effects.Num() > 0)
-	{
-		for (TSubclassOf<UAbilityEffect> BaseEffectClass : Ability->Effects)
-		{
-			if (!BaseEffectClass) continue;
-			UAbilityEffect* EffectCDO = BaseEffectClass->GetDefaultObject<UAbilityEffect>();
-			Snapshot.Effects.Add(EffectCDO->EffectData);
-			
-			if (EffectCDO->GetInnerEffects().Num() > 0)
-			{
-				for (TSubclassOf<UAbilityEffect> OnHitEffectClass : EffectCDO->GetInnerEffects())
-				{
-					if (!OnHitEffectClass) continue;
-					UAbilityEffect* EffectCDO2 = OnHitEffectClass->GetDefaultObject<UAbilityEffect>();
-					Snapshot.Effects.Add(EffectCDO2->EffectData);
-				}
-			}
-		}
-	}
-	
-	
-	
-	OnAbilityCastDebugSnapshotDelegate.Broadcast(Snapshot);
+	AbilitySystemComponent->ResolveAbilityInput(Ability, Event);
 }
-void AMainCharacter::AbilityCastFailDebugSnapshot(UAbilityData* Ability, EAbilityFailureReason Reason)
-{
-	const FText ReasonText =
-		StaticEnum<EAbilityFailureReason>()
-			->GetDisplayNameTextByValue(
-				static_cast<int64>(Reason)
-			);
 
-	OnAbilityCastFailedDebugSnapshotDelegate.Broadcast(Reason,Ability->Tag);
+void AMainCharacter::OnInteractInput()
+{
+	InteractionComponent->Interact();
 }
 
 

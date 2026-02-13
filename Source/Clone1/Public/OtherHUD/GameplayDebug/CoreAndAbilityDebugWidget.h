@@ -3,20 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HorText2Val.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/Overlay.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Structs/FGameplayDebugSnapshot.h"
-#include "GameplayDebugWidget.generated.h"
+#include "CoreAndAbilityDebugWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class CLONE1_API UGameplayDebugWidget : public UUserWidget
+class CLONE1_API UCoreAndAbilityDebugWidget : public UUserWidget
 {
 	GENERATED_BODY()
 protected:

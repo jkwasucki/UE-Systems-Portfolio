@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Components/InteractableComponent.h"
+#include "Components/ActorInteractionComponent.h"
 #include "GameFramework/Character.h"
+#include "Main/Character/Derived/MainCharacter.h"
 #include "Main/PlayerController/MainPlayerController.h"
 
 // Sets default values for this component's properties
-UInteractableComponent::UInteractableComponent()
+UActorInteractionComponent::UActorInteractionComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -15,26 +16,17 @@ UInteractableComponent::UInteractableComponent()
 	// ...
 }
 
-void UInteractableComponent::Interact_Implementation(ACharacter* Character)
-{
-	bIsInteractedWith = true;
-	OnInteractDelegate.Broadcast(Character);
-}
-
-void UInteractableComponent::Highlight_Implementation(bool bState)
-{
-	OnHighlightDelegate.Broadcast(bState);
-}
 
 
-void UInteractableComponent::SetupComponent(AActor* inParent,USphereComponent* inCollider)
+
+void UActorInteractionComponent::SetupComponent(AActor* inParent,USphereComponent* inCollider)
 {
 	if (inCollider && inParent)
 	{
 		Parent = inParent;
 		Collider = inCollider;
-		Collider->OnComponentBeginOverlap.AddDynamic(this, &UInteractableComponent::OnBeginOverlap);
-		Collider->OnComponentEndOverlap.AddDynamic(this, &UInteractableComponent::OnEndOverlap);
+		Collider->OnComponentBeginOverlap.AddDynamic(this, &UActorInteractionComponent::OnBeginOverlap);
+		Collider->OnComponentEndOverlap.AddDynamic(this, &UActorInteractionComponent::OnEndOverlap);
 		
 		Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		Collider->SetCollisionObjectType(ECC_WorldDynamic);
@@ -44,18 +36,9 @@ void UInteractableComponent::SetupComponent(AActor* inParent,USphereComponent* i
 	}
 }
 
-FText UInteractableComponent::GetActionText_Implementation() 
-{
-	return ActionText;
-}
-
-FText UInteractableComponent::GetActionKeyString_Implementation() 
-{
-	return ActionKey;
-}
 
 
-void UInteractableComponent::OnBeginOverlap(   UPrimitiveComponent* OverlappedComp,
+void UActorInteractionComponent::OnBeginOverlap(   UPrimitiveComponent* OverlappedComp,
 	AActor* OtherActor,
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex,
@@ -69,27 +52,27 @@ void UInteractableComponent::OnBeginOverlap(   UPrimitiveComponent* OverlappedCo
 		{
 			if (PC)
 			{
-				if (PC->InteractionComponent)
+				AMainCharacter* MC = PC->GetMainCharacter();
+				if (MC)
 				{
-					
-					PC->InteractionComponent->NearbyInteractables.Add(Parent);
-					
+					MC->GetInteractionComponent()->NearbyInteractables.Add(Parent);
 				}
 			}
 		}
 	}
 }
 
-void UInteractableComponent::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+void UActorInteractionComponent::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
 	if (ACharacter* Character = Cast<ACharacter>(OtherActor))
 	{
 		if (AMainPlayerController* PC = Cast<AMainPlayerController>(Character->GetController()))
 		{
-			if (PC->InteractionComponent)
+			AMainCharacter* MC = PC->GetMainCharacter();
+			if (MC)
 			{
-				PC->InteractionComponent->NearbyInteractables.Remove(Parent);
+				MC->GetInteractionComponent()->NearbyInteractables.Remove(Parent);
 			}
 		}
 	}

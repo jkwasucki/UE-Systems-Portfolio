@@ -11,16 +11,13 @@
 #include "Main/Character/CharacterVFXComponent.h"
 #include "Main/Character/CharacterMoverComponent.h"
 #include "Structs/FGameplayDebugSnapshot.h"
+#include "Main/Character/CharacterDebugComponent.h"
 #include "Types/CharacterTypes.h"
 #include "BaseCharacter.generated.h"
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStateChange, EEntityState, State);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourcesDebugSnapshot, FResourceDebugSnapshot&, Snapshot);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilityCastDebugSnapshot, FAbilityDebugSnapshot&, Snapshot);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeDebugSnapshot, FAttributeDebugSnapshot&, Snapshot);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCastFailedDebugSnapshot, EAbilityFailureReason&, Reason, FGameplayTag, AbilityName);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEffectAppearDebugSnapshot, FAbilityDebugSnapshot&, Snapshot);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEffectExpiredDebugSnapshot, FAbilityDebugSnapshot&, Snapshot);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDisplayDebugSnapshots_All, FEntityGameplayDebugSnapshot&, Snapshot);
+
+
 class UCharacterMovementComponent;
 UCLASS()
 class CLONE1_API ABaseCharacter : public ACharacter, public IDebugInfoProviderInterface
@@ -29,81 +26,55 @@ class CLONE1_API ABaseCharacter : public ACharacter, public IDebugInfoProviderIn
 protected:
 	UPROPERTY()
 	bool bIsAlive = true;
-	virtual void BeginPlay() override;
-	
 public:
-	// Sets default values for this character's properties
-	ABaseCharacter();
-	
 	FOnStateChange OnStateChangeDelegate;
-	FOnAbilityCastDebugSnapshot OnAbilityCastDebugSnapshotDelegate;
-	FOnResourcesDebugSnapshot OnResourcesDebugSnapshotDelegate;
-	FOnCastFailedDebugSnapshot OnAbilityCastFailedDebugSnapshotDelegate;
-	FOnAttributeDebugSnapshot OnAttributeDebugSnapshotDelegate;
-	FOnEffectAppearDebugSnapshot OnEffectAppearDebugSnapshotDelegate;
-	FOnEffectExpiredDebugSnapshot OnEffectExpiredDebugSnapshotDelegate;
-	FOnDisplayDebugSnapshots_All OnDisplayDebugSnapshots_AllDelegate;
-	
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
 	EEntityType EntityType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EEntityState EntityState = EEntityState::Idle;
 	
+
 	
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	UResourceComponent* ResourceComponent;						// Health / Energy
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly) 
-	UCharacterMoverComponent* CharacterMoverComponent;			// Movement overrides
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UCharacterVFXComponent* CharacterVFXComponent;				// VFX Effects
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UCharacterAnimationComponent* CharacterAnimationComponent;	// Animations
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAttributesComponent* AttributesComponent;					// Attribute's modifiers
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	UEffectsComponent* EffectsComponent;						// Character Effects 
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category= "Components")
+	UResourceComponent* ResourceComponent;										// Health / Energy
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category= "Components") 
+	UCharacterMoverComponent* MoverComponent;									// Movement overrides
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category= "Components")
+	UCharacterVFXComponent* VFXComponent;										// VFX Effects
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category= "Components")
+	UCharacterAnimationComponent* AnimationComponent;							// Animations
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category= "Components")
+	UAttributesComponent* AttributesComponent;									// Attribute's modifiers
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category= "Components")
+	UEffectsComponent* EffectsComponent;										// Character Effects 
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category= "Components")
+	UCharacterDebugComponent* DebugComponent;
 	
+
+protected:
+	virtual void BeginPlay() override;
+public:
+	ABaseCharacter();
 	
 	UFUNCTION()
 	void CleanupVisuals(const FGuid& Identifier);
-	
-	
-	
-	
 	UFUNCTION()
 	void Die();
 	UFUNCTION()
 	void Resurrect();
-
-	
-	
 	
 	UFUNCTION()
 	virtual void OnRespondToHealthChange(float Delta);
+
+	UFUNCTION()
+	void SetState(EEntityState State);
 	
-	
-	// DEBUG SNAPSHOTS
-	UFUNCTION()
-	void ResourcesChangeDebugSnapshot();
-	UFUNCTION()
-	void AttributesChangeDebugSnapshot();
-	UFUNCTION()
-	void EffectExpiredDebugSnapshot(UActiveEffectInstance* EffectInstance);
-	UFUNCTION()
-	void EffectAppearedDebugSnapshot(UActiveEffectInstance* EffectInstance);
-	UFUNCTION()
-	void RequestDebugSnapshots();
-	UFUNCTION()
-	void ListenForDebugSnapshots();
 	
 	// GETTERS
 	virtual FEntityGameplayDebugSnapshot GetDebugInfo_Implementation() override;
-	
 	UFUNCTION(BlueprintPure)
 	UCharacterAnimationComponent* BP_GetCharacterAnimationComponent() const;
-	UFUNCTION()
-	FEntityGameplayDebugSnapshot RequestEntitySnapshotData() const;
 	UFUNCTION()
 	UAttributesComponent* GetAttributesComponent();
 	UFUNCTION()
@@ -111,11 +82,13 @@ public:
 	UFUNCTION()
 	UResourceComponent* GetResourceComponent();
 	UFUNCTION()
-	UCharacterAnimationComponent* GetCharacterAnimationComponent();
+	UCharacterDebugComponent* GetDebugComponent();
 	UFUNCTION()
-	UCharacterVFXComponent* GetCharacterVFXComponent();
+	UCharacterAnimationComponent* GetAnimationComponent();
 	UFUNCTION()
-	UCharacterMoverComponent* GetCharacterMoverComponent();
+	UCharacterVFXComponent* GetVFXComponent();
+	UFUNCTION()
+	UCharacterMoverComponent* GetMoverComponent();
 	UFUNCTION()
 	EEntityState  GetState();
 	UFUNCTION()
@@ -125,10 +98,4 @@ public:
 	UFUNCTION()
 	bool IsAlive();
 	
-	
-	UFUNCTION()
-	void SetState(EEntityState State);
-	
-	
-
 };

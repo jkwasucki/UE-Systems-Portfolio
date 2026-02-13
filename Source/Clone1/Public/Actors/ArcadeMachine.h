@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/InteractableComponent.h"
+#include "Components/ActorInteractionComponent.h"
 #include "PacMan/PacmanGame.h"
 #include "PacMan/PacmanHUD.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/InteractableInterface.h"
 #include "ArcadeMachine.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuit);
@@ -17,57 +18,51 @@ UCLASS()
 class CLONE1_API AArcadeMachine : public AActor,public IInteractableInterface
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AArcadeMachine();
+
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	
 	UPROPERTY()
 	bool bIsActive = false;
-	
-	
 	UPROPERTY()
 	USceneComponent* SceneRoot;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USphereComponent* Collision;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UInteractableComponent* InteractableComponent;
-	
+	UActorInteractionComponent* InteractionComponent;
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> PacmanHUDClass;
-	
 	UPROPERTY(VisibleAnywhere, Category="UI")
 	UWidgetComponent* PacmanHUDComponent;
-	virtual void OnConstruction(const FTransform& Transform) override;
-	UFUNCTION()
-	void OnInteract(ACharacter* Char);
-	
-	UFUNCTION()
-	void FocusMachine();
 	
 public:	
 	UPROPERTY()
-	UInputHandlerComponent* InputHandlerComponent = nullptr;
-	
+	TWeakObjectPtr<UInputHandlerComponent> InputHandlerComponent = nullptr;
 	
 	FOnQuit OnQuitDelegate;
 	
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Arcade")
 	APacmanGame* PacmanGame = nullptr;
-	
-	// Called every frame
+
+protected:
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	
+	virtual void OnConstruction(const FTransform& Transform) override;
 	UFUNCTION()
-	APacmanGame* GetPacmanGame();
+	void FocusMachine();
+public:
+	AArcadeMachine();
+	virtual void Interact_Implementation(ACharacter* Character) override;
+	
 	UFUNCTION()
 	void SetupArcade(UInputHandlerComponent* inInputHandlerComponent);
+	
+	
+	// Game switchers
 	UFUNCTION()
 	void Quit();
 	UFUNCTION()
 	void Start();
+	
+	UFUNCTION()
+	APacmanGame* GetPacmanGame();
 };

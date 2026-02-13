@@ -10,8 +10,6 @@ AEnemyCharacter::AEnemyCharacter()
 {
 	EnemyAIComponent = CreateDefaultSubobject<UEnemyAIComponent>("EnemyAIComponent");
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AbilitySystemComponent");
-
-	
 	AbilityProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("AbilityProjectileSpawnPoint"));
 }
 
@@ -33,8 +31,8 @@ void AEnemyCharacter::BeginPlay()
 	AbilitySystemComponent->OnStateRequestDelegate.BindUObject(this,&ABaseCharacter::SetState);
 	AbilitySystemComponent->OnAbilityCastDelegate.AddDynamic(this, &AEnemyCharacter::ApplyAbilityVisuals);
 	AbilitySystemComponent->OnAbilityAbortedDelegate.AddDynamic(this, &AEnemyCharacter::CleanupAbilityVisuals);
-	AbilitySystemComponent->OnBeginCastDelegate.AddDynamic(GetCharacterMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
-	AbilitySystemComponent->OnEndCastDelegate.AddDynamic(GetCharacterMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
+	AbilitySystemComponent->OnBeginCastDelegate.AddDynamic(GetMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
+	AbilitySystemComponent->OnEndCastDelegate.AddDynamic(GetMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
 }
 
 
@@ -70,7 +68,7 @@ void AEnemyCharacter::TakeDamage_Implementation(float Delta)
 	if (HealthLeft <= 0)
 		Die();
 	else
-		CharacterAnimationComponent->PlayAnimationByTag(FAnimationTags::Animation_CharacterHit);
+		AnimationComponent->PlayAnimationByTag(FAnimationTags::Animation_CharacterHit);
 }
 
 void AEnemyCharacter::ApplyEffect_Implementation(AActor* EffectOrigin, FCharacterEffect& Effect, FGuid SourceInstanceID)
@@ -94,16 +92,16 @@ void AEnemyCharacter::ApplyAbilityVisuals(UAbilityData* Ability,  FGuid Instance
 {
 	if (!Ability)
 		return;
-	GetCharacterAnimationComponent()->PlayAnimation(Ability->AnimationData);
-	if (!GetCharacterMoverComponent()->IsCharacterMoving())
+	GetAnimationComponent()->PlayAnimation(Ability->AnimationData);
+	if (!GetMoverComponent()->IsCharacterMoving())
 	{
 		
-		GetCharacterAnimationComponent()->RequestRotate(Targets.Direction);
+		GetAnimationComponent()->RequestRotate(Targets.Direction);
 	}
 	
 	for (FVFXData VFX : Ability->VFXData)
 	{
-		GetCharacterVFXComponent()->PlayVFX(VFX, InstanceID);
+		GetVFXComponent()->PlayVFX(VFX, InstanceID);
 	}
 }
 

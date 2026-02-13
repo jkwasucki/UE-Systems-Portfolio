@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "OtherHUD/GameplayDebug/GameplayDebugWidget.h"
+#include "OtherHUD/GameplayDebug/CoreAndAbilityDebugWidget.h"
 
 #include "AbilitySystem/Instances/ActiveEffectInstance.h"
 
 
-void UGameplayDebugWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UCoreAndAbilityDebugWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	
@@ -29,7 +29,7 @@ void UGameplayDebugWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 }
 
 
-void UGameplayDebugWidget::SetTimer(
+void UCoreAndAbilityDebugWidget::SetTimer(
 	FTimerHandle& Handle,
 	float Duration,
 	FTimerDelegate FallbackDelegate
@@ -45,7 +45,7 @@ void UGameplayDebugWidget::SetTimer(
 	);
 }
 
-void UGameplayDebugWidget::UpdateResourcesData(FResourceDebugSnapshot& Snapshot)
+void UCoreAndAbilityDebugWidget::UpdateResourcesData(FResourceDebugSnapshot& Snapshot)
 {
 	HealthValue->SetText(
 		FText::FromString(
@@ -61,7 +61,7 @@ void UGameplayDebugWidget::UpdateResourcesData(FResourceDebugSnapshot& Snapshot)
 	
 }
 
-void UGameplayDebugWidget::UpdateAttributeData(FAttributeDebugSnapshot& Snapshot)
+void UCoreAndAbilityDebugWidget::UpdateAttributeData(FAttributeDebugSnapshot& Snapshot)
 {
 	SpeedValue->SetText(
 		FText::FromString(
@@ -85,7 +85,7 @@ void UGameplayDebugWidget::UpdateAttributeData(FAttributeDebugSnapshot& Snapshot
 	);
 }
 
-void UGameplayDebugWidget::UpdateAll(FEntityGameplayDebugSnapshot& Snapshot)
+void UCoreAndAbilityDebugWidget::UpdateAll(FEntityGameplayDebugSnapshot& Snapshot)
 {
 	UpdateAttributeData(Snapshot.AttributeSnapshot);
 	UpdateResourcesData(Snapshot.ResourceDebugSnapshot);
@@ -108,7 +108,7 @@ void UGameplayDebugWidget::UpdateAll(FEntityGameplayDebugSnapshot& Snapshot)
 	);
 }
 
-void UGameplayDebugWidget::UpdateState(EEntityState State)
+void UCoreAndAbilityDebugWidget::UpdateState(EEntityState State)
 {
 	EntityState->SetText(
 	StaticEnum<EEntityState>()
@@ -119,7 +119,7 @@ void UGameplayDebugWidget::UpdateState(EEntityState State)
 }
 
 
-void UGameplayDebugWidget::UpdateAbilityData(FAbilityDebugSnapshot& Snapshot)
+void UCoreAndAbilityDebugWidget::UpdateAbilityData(FAbilityDebugSnapshot& Snapshot)
 {
 
 	// SET TIMER
@@ -191,7 +191,7 @@ void UGameplayDebugWidget::UpdateAbilityData(FAbilityDebugSnapshot& Snapshot)
 }
 
 
-UTextBlock* UGameplayDebugWidget::SpawnEffectDescriptor(FText& Text,UVerticalBox* Box)
+UTextBlock* UCoreAndAbilityDebugWidget::SpawnEffectDescriptor(FText& Text,UVerticalBox* Box)
 {
 	UTextBlock* TextBlock = NewObject<UTextBlock>(this);
 	if (!TextBlock)
@@ -208,7 +208,7 @@ UTextBlock* UGameplayDebugWidget::SpawnEffectDescriptor(FText& Text,UVerticalBox
 
 
 
-void UGameplayDebugWidget::ShowEffects_OnSelf(FAbilityDebugSnapshot& Ability)
+void UCoreAndAbilityDebugWidget::ShowEffects_OnSelf(FAbilityDebugSnapshot& Ability)
 {
 	for (FCharacterEffect& Effect : Ability.Effects)
 	{
@@ -228,7 +228,7 @@ void UGameplayDebugWidget::ShowEffects_OnSelf(FAbilityDebugSnapshot& Ability)
 	}
 }
 
-void UGameplayDebugWidget::ShowEffects_OnAbility(FAbilityDebugSnapshot& Ability)
+void UCoreAndAbilityDebugWidget::ShowEffects_OnAbility(FAbilityDebugSnapshot& Ability)
 {
 	for (FCharacterEffect& Effect : Ability.Effects)
 	{
@@ -240,7 +240,7 @@ void UGameplayDebugWidget::ShowEffects_OnAbility(FAbilityDebugSnapshot& Ability)
 	}
 }
 
-void UGameplayDebugWidget::HandleDisplayEffect(FAbilityDebugSnapshot& Ability)
+void UCoreAndAbilityDebugWidget::HandleDisplayEffect(FAbilityDebugSnapshot& Ability)
 {
 	for (FCharacterEffect& Effect : Ability.Effects)
 	{
@@ -255,7 +255,7 @@ void UGameplayDebugWidget::HandleDisplayEffect(FAbilityDebugSnapshot& Ability)
 	}
 }
 
-void UGameplayDebugWidget::HideEffect_OnSelf(FAbilityDebugSnapshot& Ability)
+void UCoreAndAbilityDebugWidget::HideEffect_OnSelf(FAbilityDebugSnapshot& Ability)
 {
 	for (FCharacterEffect& Effect : Ability.Effects)
 	{
@@ -267,14 +267,14 @@ void UGameplayDebugWidget::HideEffect_OnSelf(FAbilityDebugSnapshot& Ability)
 	}
 }
 
-void UGameplayDebugWidget::ClearEffectsOnSelf()
+void UCoreAndAbilityDebugWidget::ClearEffectsOnSelf()
 {
 	DisplayedEffectsOnPlayer.Empty();
 	EffectsOnSelfList->ClearChildren();
 }
 
 
-FText UGameplayDebugWidget::FormatEffectDescriptor(FCharacterEffect& Effect)
+FText UCoreAndAbilityDebugWidget::FormatEffectDescriptor(FCharacterEffect& Effect)
 {
 	FText ModeText = StaticEnum<EEffectMode>()
 		->GetDisplayNameTextByValue((int64)Effect.EffectMode);
@@ -306,7 +306,7 @@ FText UGameplayDebugWidget::FormatEffectDescriptor(FCharacterEffect& Effect)
 	return FormattedDesc;
 }
 
-void UGameplayDebugWidget::ToggleAbilityBox(bool bState)
+void UCoreAndAbilityDebugWidget::ToggleAbilityBox(bool bState)
 {
 	AbilityBox->SetVisibility(bState ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
 }

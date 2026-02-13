@@ -4,6 +4,7 @@
 #include "Main/Character/Base/BaseCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Main/Character/EffectsComponent.h"
+#include "Main/Character/CharacterDebugComponent.h"
 #include "Structs/FAnimationTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 // Sets default values
@@ -15,10 +16,11 @@ ABaseCharacter::ABaseCharacter()
 	ResourceComponent = CreateDefaultSubobject<UResourceComponent>(FName("ResourceComponent"));
 	EffectsComponent = CreateDefaultSubobject<UEffectsComponent>("EffectsComponent");
 	AttributesComponent = CreateDefaultSubobject<UAttributesComponent>(FName("AttributesComponent"));
-	CharacterMoverComponent = CreateDefaultSubobject<UCharacterMoverComponent>("MovementHandlerComponent");
-	CharacterVFXComponent = CreateDefaultSubobject<UCharacterVFXComponent>("CharacterVFXComponent");
-	CharacterAnimationComponent = CreateDefaultSubobject<UCharacterAnimationComponent>("CharacterAnimationComponent");
-	CharacterAnimationComponent->SetCharacterMovementComponentLink(CharacterMoverComponent);
+	MoverComponent = CreateDefaultSubobject<UCharacterMoverComponent>("MovementHandlerComponent");
+	VFXComponent = CreateDefaultSubobject<UCharacterVFXComponent>("VFXComponent");
+	AnimationComponent = CreateDefaultSubobject<UCharacterAnimationComponent>("AnimationComponent");
+	AnimationComponent->SetCharacterMovementComponentLink(MoverComponent);
+	DebugComponent = CreateDefaultSubobject<UCharacterDebugComponent>("DebugComponent");
 }
 
 // Called when the game starts or when spawned
@@ -31,58 +33,19 @@ void ABaseCharacter::BeginPlay()
 	// Track health delta change
 	ResourceComponent->OnHealthChangedByDeltaDelegate.AddDynamic(this,&ABaseCharacter::OnRespondToHealthChange);
 	
-	EffectsComponent->OnRequestVFXDelegate.AddDynamic(CharacterVFXComponent, &UCharacterVFXComponent::PlayVFX);
-	EffectsComponent->OnRequestVFXEndDelegate.AddDynamic(CharacterVFXComponent, &UCharacterVFXComponent::StopVFX);
+	EffectsComponent->OnRequestVFXDelegate.AddDynamic(VFXComponent, &UCharacterVFXComponent::PlayVFX);
+	EffectsComponent->OnRequestVFXEndDelegate.AddDynamic(VFXComponent, &UCharacterVFXComponent::StopVFX);
 	
-	CharacterMoverComponent->OnStateRequestDelegate.BindUObject(this,&ABaseCharacter::SetState);
-	ListenForDebugSnapshots();
-	RequestDebugSnapshots();
-}
-void ABaseCharacter::RequestDebugSnapshots()
-{
-	FEntityGameplayDebugSnapshot Snapshot = RequestEntitySnapshotData();
-	OnDisplayDebugSnapshots_AllDelegate.Broadcast(Snapshot);
-}
-
-// DEBUG SNAPSHOTS
-void ABaseCharacter::ListenForDebugSnapshots()
-{
-	GetResourceComponent()->SnapshotOnHealthChangedDelegate.AddDynamic(this, &ABaseCharacter::ResourcesChangeDebugSnapshot);
-	GetResourceComponent()->SnapshotOnEnergyChangedDelegate.AddDynamic(this, &ABaseCharacter::ResourcesChangeDebugSnapshot);
-	GetAttributesComponent()->OnAttributesChangedDelegate.AddDynamic(this, &ABaseCharacter::AttributesChangeDebugSnapshot);
-	GetEffectsComponent()->OnEffectEndDelegate.AddDynamic(this, &ABaseCharacter::EffectExpiredDebugSnapshot);
-	GetEffectsComponent()->OnEffectStartDelegate.AddDynamic(this, &ABaseCharacter::EffectAppearedDebugSnapshot);
-}
-
-void ABaseCharacter::ResourcesChangeDebugSnapshot()
-{
-	FResourceDebugSnapshot Snapshot = RequestEntitySnapshotData().ResourceDebugSnapshot;
-	OnResourcesDebugSnapshotDelegate.Broadcast(Snapshot);
-}
-void ABaseCharacter::AttributesChangeDebugSnapshot()
-{
-	FAttributeDebugSnapshot Snapshot = RequestEntitySnapshotData().AttributeSnapshot;
-	OnAttributeDebugSnapshotDelegate.Broadcast(Snapshot);
-}
-void ABaseCharacter::EffectExpiredDebugSnapshot(UActiveEffectInstance* EffectInstance)
-{
-	FAbilityDebugSnapshot Snapshot;
-	Snapshot.Effects.Add(EffectInstance->CharacterEffectDefinition);
+	MoverComponent->OnStateRequestDelegate.BindUObject(this,&ABaseCharacter::SetState);
 	
-	OnEffectExpiredDebugSnapshotDelegate.Broadcast(Snapshot);
-}
-void ABaseCharacter::EffectAppearedDebugSnapshot(UActiveEffectInstance* EffectInstance)
-{
-	FAbilityDebugSnapshot Snapshot;
-	Snapshot.Effects.Add(EffectInstance->CharacterEffectDefinition);
-	
-	OnEffectAppearDebugSnapshotDelegate.Broadcast(Snapshot);
+	// Initialize Debug Component
+	DebugComponent->Init(this);
 }
 
 void ABaseCharacter::CleanupVisuals(const FGuid& Identifier)
 {
-	GetCharacterAnimationComponent()->StopCurrentMontage();
-	GetCharacterVFXComponent()->StopVFX(Identifier);
+	GetAnimationComponent()->StopCurrentMontage();
+	GetVFXComponent()->StopVFX(Identifier);
 }
 
 void ABaseCharacter::Die()
@@ -146,45 +109,53 @@ void ABaseCharacter::Resurrect()
 	MeshComp->ResetAllBodiesSimulatePhysics();
 
 	// Play resurrect animation
-	CharacterAnimationComponent->PlayAnimationByTag(
+	AnimationComponent->PlayAnimationByTag(
 		FAnimationTags::Animation_CharacterResurrect
 	);
 }
 
 
+// GETTERS =============================================================
+//======================================================================
 UAttributesComponent* ABaseCharacter::GetAttributesComponent()
 {
 	return AttributesComponent;
 }
-
 UEffectsComponent* ABaseCharacter::GetEffectsComponent()
 {
 	return EffectsComponent;
 }
-
 UResourceComponent* ABaseCharacter::GetResourceComponent()
 {
 	return ResourceComponent;
 }
-
-UCharacterAnimationComponent* ABaseCharacter::GetCharacterAnimationComponent()
+UCharacterDebugComponent* ABaseCharacter::GetDebugComponent()
 {
-	return CharacterAnimationComponent;
+	return DebugComponent;
 }
-
-UCharacterVFXComponent* ABaseCharacter::GetCharacterVFXComponent()
+UCharacterAnimationComponent* ABaseCharacter::GetAnimationComponent()
 {
-	return CharacterVFXComponent;
+	return AnimationComponent;
 }
-
-UCharacterMoverComponent* ABaseCharacter::GetCharacterMoverComponent()
+UCharacterVFXComponent* ABaseCharacter::GetVFXComponent()
 {
-	return CharacterMoverComponent;	
+	return VFXComponent;
 }
-
+UCharacterMoverComponent* ABaseCharacter::GetMoverComponent()
+{
+	return MoverComponent;	
+}
 EEntityState ABaseCharacter::GetState()
 {
 	return  EntityState;
+}
+FEntityGameplayDebugSnapshot ABaseCharacter::GetDebugInfo_Implementation()
+{
+	return DebugComponent->RequestEntitySnapshotData();
+}
+UCharacterAnimationComponent* ABaseCharacter::BP_GetCharacterAnimationComponent() const
+{
+	return AnimationComponent;
 }
 
 void ABaseCharacter::OnRespondToHealthChange(float Delta)
@@ -197,11 +168,6 @@ bool ABaseCharacter::IsAlive()
 	return bIsAlive;
 }
 
-FEntityGameplayDebugSnapshot ABaseCharacter::GetDebugInfo_Implementation()
-{
-	return RequestEntitySnapshotData();
-}
-
 bool ABaseCharacter::IsEnemy()
 {
 	return EntityType == EEntityType::Enemy;
@@ -210,44 +176,6 @@ bool ABaseCharacter::IsEnemy()
 bool ABaseCharacter::IsAlly()
 {
 	return EntityType == EEntityType::Ally;
-}
-
-
-UCharacterAnimationComponent* ABaseCharacter::BP_GetCharacterAnimationComponent() const
-{
-	return CharacterAnimationComponent;
-}
-
-FEntityGameplayDebugSnapshot ABaseCharacter::RequestEntitySnapshotData() const
-{
-	FEntityGameplayDebugSnapshot Snapshot;
-
-	// Entity info
-	Snapshot.EntityType  = EntityType;
-	Snapshot.EntityState = EntityState;
-
-	// Attributes
-	Snapshot.AttributeSnapshot.Attack =
-		AttributesComponent->GetFinalAttributeValue(EAttribute::Attack);
-
-	Snapshot.AttributeSnapshot.Speed =
-		AttributesComponent->GetFinalAttributeValue(EAttribute::Speed);
-
-	Snapshot.AttributeSnapshot.Armor =
-		AttributesComponent->GetFinalAttributeValue(EAttribute::Armor);
-
-	Snapshot.AttributeSnapshot.Health =
-		AttributesComponent->GetFinalAttributeValue(EAttribute::Health);
-
-	// Resources
-	Snapshot.ResourceDebugSnapshot.Health =
-		ResourceComponent->GetHealth();
-
-	Snapshot.ResourceDebugSnapshot.Energy =
-		ResourceComponent->GetEnergy();
-	Snapshot.AbilityDebugSnapshot.Effects = EffectsComponent->GetActiveEffectsDefinitions();
-	
-	return Snapshot;
 }
 
 void ABaseCharacter::SetState(EEntityState State)

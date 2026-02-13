@@ -2,18 +2,17 @@
 
 
 #include "Main/PlayerController/MainPlayerController.h"
-#include "Main/Character/Base/BaseCharacter.h"
 #include "Actors/ArcadeMachine.h"
 #include "EnhancedInputComponent.h"
-#include "Interfaces/DebugInfoProviderInterface.h"
+#include "Main/Character/Derived/MainCharacter.h"
 #include "Main/PlayerState/MainPlayerState.h"
 
 
 AMainPlayerController::AMainPlayerController()
 {
 	InputHandlerComponent = CreateDefaultSubobject<UInputHandlerComponent>("InputHandlerComponent");
-	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
 	HUDComponent = CreateDefaultSubobject<UHUDComponent>("HUDComponent");
+	HUDComponent->SetComponentTickEnabled(true);
 }
 
 void AMainPlayerController::BeginPlay()
@@ -23,9 +22,7 @@ void AMainPlayerController::BeginPlay()
 	
 	//Capture drop requests from InventoryComponent (PlayerState)
 	GetPlayerState<AMainPlayerState>()->InventoryComponent->OnRequestDropDelegate.AddDynamic(this, &AMainPlayerController::SpawnItemActor);
-	InputHandlerComponent->OnEntityUnderCursorDelegate.AddDynamic(this, &AMainPlayerController::GetEntityData);
-	InputHandlerComponent->OnNoEntityUnderCursorDelegate.AddDynamic(this, &AMainPlayerController::SetEntityDataExpired);
-	
+	HUDComponent->Init(this);
 }
 
 void AMainPlayerController::SetupInputComponent()
@@ -38,11 +35,6 @@ void AMainPlayerController::SetupInputComponent()
 	InputHandlerComponent->SetupInput(EI);
 }
 
-void AMainPlayerController::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	QueryEntityUnderCursor();
-}
 
 void AMainPlayerController::SpawnItemActor(FItemStack ItemStack)
 {
@@ -71,49 +63,6 @@ void AMainPlayerController::SpawnItemActor(FItemStack ItemStack)
 		}
 	}
 }
-
-void AMainPlayerController::GetEntityData(AActor* Actor)
-{
-	if (Actor->Implements<UDebugInfoProviderInterface>())
-	{
-		ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(Actor);
-		FEntityGameplayDebugSnapshot Snapshot = IDebugInfoProviderInterface::Execute_GetDebugInfo(Actor);
-		OnEntityDebugSnapshotDelegate.Broadcast(BaseCharacter,Snapshot);
-	}
-}
-
-void AMainPlayerController::SetEntityDataExpired()
-{
-	OnEntityDebugSnapshot_ExpiredDelegate.Broadcast();
-}
-
-void AMainPlayerController::QueryEntityUnderCursor()
-{
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(GetPawn());
-	
-	int32 SizeX, SizeY;
-	GetViewportSize(SizeX, SizeY);
-
-	const FVector2D ScreenCenter(
-		SizeX * 0.5f,
-		SizeY * 0.5f
-	);
-	
-	FHitResult Hit;
-	const bool bHit = GetHitResultAtScreenPosition(
-	   ScreenCenter,
-	   ECC_PhysicsBody,
-	   QueryParams,
-	   Hit
-   );
-
-	InputHandlerComponent->ProcessResultUnderCursor(
-		bHit,
-		Hit
-	);
-}
-
 FVector AMainPlayerController::GetDropLocation()
 {
 	APawn* P = GetPawn();
@@ -127,7 +76,6 @@ FVector AMainPlayerController::GetDropLocation()
 		return FVector::ZeroVector;	
 	}
 }
-
 void AMainPlayerController::StartPacmanGame(AArcadeMachine* ArcadeMachine)
 {
 	check(ArcadeMachine);
@@ -148,7 +96,6 @@ void AMainPlayerController::StartPacmanGame(AArcadeMachine* ArcadeMachine)
 	ArcadeMachine->SetupArcade(InputHandlerComponent);
 	
 }
-
 void AMainPlayerController::StopArcade()
 {
 	SetViewTargetWithBlend(
@@ -164,6 +111,13 @@ void AMainPlayerController::StopArcade()
 UHUDComponent* AMainPlayerController::GetHUDComponent() const
 {
 	return FindComponentByClass<UHUDComponent>();
+}
+
+AMainCharacter* AMainPlayerController::GetMainCharacter() const
+{
+	AMainCharacter* MainCharacter = Cast<AMainCharacter>(GetPawn());
+	if (!MainCharacter) return nullptr;
+	return MainCharacter;
 }
 
 FVector AMainPlayerController::GetCharacterLocation()

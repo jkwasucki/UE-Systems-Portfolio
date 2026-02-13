@@ -57,7 +57,7 @@ void UEnemyAIComponent::Initialize(ABaseCharacter* InBaseCharacter)
 
 AActor* UEnemyAIComponent::GetClosestFoe()
 {
-	if (!IsValid(BaseCharacter) || FoesInRange.Num() == 0)
+	if (!BaseCharacter.IsValid() || FoesInRange.Num() == 0)
 		return nullptr;
 
 	AActor* ClosestFoe = nullptr;
@@ -65,9 +65,9 @@ AActor* UEnemyAIComponent::GetClosestFoe()
 
 	const FVector MyLocation = BaseCharacter->GetActorLocation();
 
-	for (AActor* Foe : FoesInRange)
+	for (TWeakObjectPtr<AActor> Foe : FoesInRange)
 	{
-		if (!IsValid(Foe))
+		if (!Foe.IsValid())
 			continue;
 
 		const float DistSq = FVector::DistSquared(MyLocation, Foe->GetActorLocation());
@@ -75,7 +75,7 @@ AActor* UEnemyAIComponent::GetClosestFoe()
 		if (DistSq < ClosestDistanceSq)
 		{
 			ClosestDistanceSq = DistSq;
-			ClosestFoe = Foe;
+			ClosestFoe = Foe.Get();
 		}
 	}
 
@@ -84,7 +84,7 @@ AActor* UEnemyAIComponent::GetClosestFoe()
 
 void UEnemyAIComponent::HandleState()
 {
-	if (!IsValid(BaseCharacter)) return;
+	if (!BaseCharacter.IsValid()) return;
 	EEntityState NewState = BaseCharacter->GetState();
 	switch (NewState)
 	{
@@ -118,30 +118,27 @@ void UEnemyAIComponent::TryAttacking()
 	
 	
 	// GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("ATTACKING!!"));
-	if (AEnemyCharacter* GameplayCharacter = Cast<AEnemyCharacter>(BaseCharacter))
+	if (AEnemyCharacter* GameplayCharacter = Cast<AEnemyCharacter>(GetOwner()))
 	{
 		UAbilitySystemComponent* AbilitySystemComponent = ICharacterEffectReceiverInterface::Execute_GetAbilitySystemComponent(GetOwner());
 		if (AbilitySystemComponent->GetGrantedAbilities().Num() == 0) return;
 		
 		UAbilityData* Ability = AbilitySystemComponent->GetGrantedAbilities()[0];
 		AbilitySystemComponent->TryUseAbility(Ability);
-		
 	}
 }
 
 void UEnemyAIComponent::FaceFoe(float DeltaTime)
 {
-	if (!IsValid(BaseCharacter))
-		return;
 
 	AActor* Closest = GetClosestFoe();
 	if (!IsValid(Closest))
 		return;
 
-	FVector ToTarget = Closest->GetActorLocation() - BaseCharacter->GetActorLocation();
+	FVector ToTarget = Closest->GetActorLocation() - GetOwner()->GetActorLocation();
 	FRotator TargetRotation = ToTarget.Rotation();
 
-	FRotator CurrentRotation = BaseCharacter->GetActorRotation();
+	FRotator CurrentRotation = GetOwner()->GetActorRotation();
 
 	FRotator NewRotation = FMath::RInterpTo(
 		CurrentRotation,
@@ -150,7 +147,7 @@ void UEnemyAIComponent::FaceFoe(float DeltaTime)
 		5.0f   // Rotation speed (adjust as needed)
 	);
 
-	BaseCharacter->SetActorRotation(NewRotation);
+	GetOwner()->SetActorRotation(NewRotation);
 }
 void UEnemyAIComponent::OnFoeInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                      UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

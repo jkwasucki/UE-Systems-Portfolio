@@ -5,13 +5,14 @@
 
 #include "Equipment/EquipmentComponent.h"
 #include "Inventory/InventoryComponent.h"
+#include "QuestSystem/QuestComponent.h"
 
 
 AMainPlayerState::AMainPlayerState()
 {
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 	EquipmentComponent = CreateDefaultSubobject<UEquipmentComponent>("EquipmentComponent");
-	
+	QuestSystemComponent = CreateDefaultSubobject<UQuestComponent>("QuestSystemComponent");
 }
 
 void AMainPlayerState::BeginPlay()

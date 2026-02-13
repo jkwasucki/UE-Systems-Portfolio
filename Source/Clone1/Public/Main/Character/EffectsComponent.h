@@ -37,7 +37,7 @@ protected:
 public:	
 	
 	UPROPERTY()
-	UAttributesComponent* AttributesComponent = nullptr;
+	TWeakObjectPtr<UAttributesComponent> AttributesComponent = nullptr;
 	
 	UPROPERTY()
 	FOnConsumableEffectStart OnConsumableEffectStartDelegate;

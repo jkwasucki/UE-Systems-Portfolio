@@ -26,16 +26,11 @@ class CLONE1_API UAbilitySystemComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
-	UAbilitySystemComponent();
-
 protected:
-	UPROPERTY(VisibleAnywhere)
-	TArray<UAbilityData*> GrantedAbilities;
-
 	UPROPERTY()
 	bool bIsCasting = false;
+	UPROPERTY(VisibleAnywhere)
+	TArray<UAbilityData*> GrantedAbilities;
 	UPROPERTY()
 	UActiveAbilityInstance* ActiveAbility;
 	UPROPERTY()
@@ -50,7 +45,8 @@ public:
 	FOnBeginCast OnBeginCastDelegate;
 	FOnEndCast OnEndCastDelegate;
 	
-	
+public:
+	UAbilitySystemComponent();
 	// GETTERS
 	UFUNCTION()
 	bool IsOnCooldown(UAbilityData* Ability);
@@ -69,10 +65,13 @@ public:
 	
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
+	UFUNCTION()
+	void ResolveAbilityInput(UAbilityData* AbilityData,EAbilityInputEvent Event);
 	
 	// MAIN CHAIN
 	bool Validate(UAbilityData* Ability, FAbilityTargetData& OutTargetData, EAbilityFailureReason& OutFailReason);
 	UFUNCTION()
 	void Commit(UAbilityData* Ability);
 	void Execute(UAbilityData* Ability,FAbilityTargetData& TargetData);
+	
 };

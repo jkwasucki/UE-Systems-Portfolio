@@ -13,22 +13,18 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CLONE1_API UCharacterAnimationComponent : public UActorComponent
 {
 	GENERATED_BODY()
-public:
-	UCharacterAnimationComponent();
+
+
 protected:
 	UPROPERTY()
-	UCharacterMoverComponent* CharacterMovementComponent = nullptr;
-	
-	
+	TWeakObjectPtr<UCharacterMoverComponent> CharacterMovementComponent = nullptr;
 	UPROPERTY()
 	UAnimMontage* CurrentAnimMontage = nullptr;
-	
 	// ROTATION
 	UPROPERTY()
 	bool bShouldRotate = false;
 	UPROPERTY()
 	FVector OverwriteRotationVector;
-	
 	UPROPERTY()
 	FTimerHandle PoseHoldTimerHandle;
 	UPROPERTY()
@@ -42,8 +38,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsUpperBodyAnimActive = false;			// SWITCH BETWEEN ANIM LAYERS
 	
+	
+protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+public:
+	UCharacterAnimationComponent();
 	UFUNCTION()
 	void PlayAnimation(FAnimationData AnimData);
 	UFUNCTION()

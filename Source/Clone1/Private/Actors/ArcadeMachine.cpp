@@ -17,7 +17,7 @@ AArcadeMachine::AArcadeMachine()
 	Collision->SetupAttachment(RootComponent);
 	
 	
-	InteractableComponent = CreateDefaultSubobject<UInteractableComponent>("InteractionComponent");
+	InteractionComponent = CreateDefaultSubobject<UActorInteractionComponent>("InteractionComponent");
 	
 	PacmanHUDComponent = CreateDefaultSubobject<UWidgetComponent>("PacmanHUDComponent");
 	PacmanHUDComponent->SetupAttachment(RootComponent);
@@ -33,10 +33,8 @@ void AArcadeMachine::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (!InteractableComponent) return;
-	InteractableComponent->SetupComponent(this,Collision);
-	InteractableComponent->OnInteractDelegate.AddDynamic(this, &AArcadeMachine::OnInteract);
-	
+	if (!InteractionComponent) return;
+	InteractionComponent->SetupComponent(this,Collision);
 	if (PacmanHUDComponent)
 	{
 		UPacmanHUD* PacmanHUD = Cast<UPacmanHUD>(PacmanHUDComponent->GetUserWidgetObject());
@@ -57,11 +55,6 @@ void AArcadeMachine::OnConstruction(const FTransform& Transform)
 		PacmanHUDComponent->SetVisibility(true);
 		PacmanHUDComponent->SetHiddenInGame(false);
 	}
-}
-
-void AArcadeMachine::OnInteract(ACharacter* Char)
-{
-	FocusMachine();
 }
 
 void AArcadeMachine::FocusMachine()
@@ -101,6 +94,11 @@ void AArcadeMachine::SetupArcade(UInputHandlerComponent* inInputHandlerComponent
 	}
 }
 
+void AArcadeMachine::Interact_Implementation(ACharacter* Character)
+{
+	FocusMachine();
+}
+
 void AArcadeMachine::Quit()
 {
 	PacmanGame->QuitGame();
@@ -109,7 +107,7 @@ void AArcadeMachine::Quit()
 	InputHandlerComponent = nullptr;
 	OnQuitDelegate.Broadcast();
 	
-	InteractableComponent->bIsInteractedWith = false;
+	InteractionComponent->bIsInteractedWith = false;
 }
 
 void AArcadeMachine::Start()

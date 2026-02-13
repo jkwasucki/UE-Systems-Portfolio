@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Inventory/InventoryComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "QuestSystem/QuestComponent.h"
 #include "Structs/FAbilitySlot.h"
 #include "MainPlayerState.generated.h"
 
@@ -23,6 +24,8 @@ public:
 	UInventoryComponent* InventoryComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	UEquipmentComponent* EquipmentComponent;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	UQuestComponent* QuestSystemComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TArray<UAbilityData*> AvailableAbilities;			// WHAT IS AVAILABLE TO USE

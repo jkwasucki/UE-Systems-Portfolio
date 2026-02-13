@@ -3,29 +3,40 @@
 
 #include "OtherHUD/GameplayDebug/ScreenGameplayDebugWidget.h"
 #include "Main/PlayerController/MainPlayerController.h"
+#include "Main/Character/Base/BaseCharacter.h"
 #include "Main/Character/Derived/MainCharacter.h"
+#include "Main/PlayerState/MainPlayerState.h"
 
 
 void UScreenGameplayDebugWidget::Init(AMainPlayerController* PC)
 {
 	if (PC)
 	{
+		AMainCharacter* MC = PC->GetMainCharacter();
 		// TARGET
-		PC->OnEntityDebugSnapshotDelegate.AddDynamic(this,&UScreenGameplayDebugWidget::HandleTargetBox);
-		PC->OnEntityDebugSnapshot_ExpiredDelegate.AddDynamic(this, &UScreenGameplayDebugWidget::DisableTargetBox);
+		MC->GetDebugComponent()->OnEntityDebugSnapshotDelegate.AddDynamic(this,&UScreenGameplayDebugWidget::HandleTargetBox);
+		MC->GetInteractionComponent()->OnNoEntityUnderCursorDelegate.AddDynamic(this, &UScreenGameplayDebugWidget::DisableTargetBox);
 		
 		if (PC->GetPawn())
 		{
+			if (AMainPlayerState* MainState = Cast<AMainPlayerState>(PC->GetPawn()->GetPlayerState()))
+			{
+				if (UQuestComponent* QuestSystemComponent = MainState->QuestSystemComponent)
+				{
+					QuestSystemComponent->OnQuestStartedDelegate.AddDynamic(QuestDebugWidget, &UQuestDebugWidget::DisplayQuest);
+				}
+			}
+			
 			if (ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(PC->GetPawn()))
 			{
-				BaseCharacter->OnDisplayDebugSnapshots_AllDelegate.AddDynamic(Self_GameplayDebugWidget, &UGameplayDebugWidget::UpdateAll);
-				BaseCharacter->OnStateChangeDelegate.AddDynamic(Self_GameplayDebugWidget,&UGameplayDebugWidget::UpdateState);
-				BaseCharacter->OnEffectAppearDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UGameplayDebugWidget::ShowEffects_OnSelf);
-				BaseCharacter->OnEffectExpiredDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UGameplayDebugWidget::HideEffect_OnSelf);
-				BaseCharacter->OnAttributeDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UGameplayDebugWidget::UpdateAttributeData);
-				BaseCharacter->OnResourcesDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UGameplayDebugWidget::UpdateResourcesData);
-				BaseCharacter->OnAbilityCastDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UGameplayDebugWidget::UpdateAbilityData);
-				BaseCharacter->OnAbilityCastFailedDebugSnapshotDelegate.AddDynamic(this, &UScreenGameplayDebugWidget::CaptureAbilityFailSnapshot);
+				BaseCharacter->GetDebugComponent()->OnDisplayDebugSnapshots_AllDelegate.AddDynamic(Self_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateAll);
+				BaseCharacter->OnStateChangeDelegate.AddDynamic(Self_GameplayDebugWidget,&UCoreAndAbilityDebugWidget::UpdateState);
+				BaseCharacter->GetDebugComponent()->OnEffectAppearDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::ShowEffects_OnSelf);
+				BaseCharacter->GetDebugComponent()->OnEffectExpiredDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::HideEffect_OnSelf);
+				BaseCharacter->GetDebugComponent()->OnAttributeDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateAttributeData);
+				BaseCharacter->GetDebugComponent()->OnResourcesDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateResourcesData);
+				BaseCharacter->GetDebugComponent()->OnAbilityCastDebugSnapshotDelegate.AddDynamic(Self_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateAbilityData);
+				BaseCharacter->GetDebugComponent()->OnAbilityCastFailedDebugSnapshotDelegate.AddDynamic(this, &UScreenGameplayDebugWidget::CaptureAbilityFailSnapshot);
 			}
 			
 		}
@@ -54,51 +65,51 @@ void UScreenGameplayDebugWidget::SubscribeToTarget(ABaseCharacter* Target)
 	UnsubscribeFromTarget();
 	
 	CurrentTarget = Target;
-	CurrentTarget->OnDisplayDebugSnapshots_AllDelegate.AddDynamic(Target_GameplayDebugWidget, &UGameplayDebugWidget::UpdateAll);
-	CurrentTarget->OnStateChangeDelegate.AddDynamic(Target_GameplayDebugWidget,&UGameplayDebugWidget::UpdateState);
-	CurrentTarget->OnEffectAppearDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UGameplayDebugWidget::ShowEffects_OnSelf);
-	CurrentTarget->OnAttributeDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UGameplayDebugWidget::UpdateAttributeData);
-	CurrentTarget->OnResourcesDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UGameplayDebugWidget::UpdateResourcesData);
-	CurrentTarget->OnAbilityCastDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UGameplayDebugWidget::UpdateAbilityData);
-	CurrentTarget->OnEffectExpiredDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UGameplayDebugWidget::HideEffect_OnSelf);
+	CurrentTarget->GetDebugComponent()->OnDisplayDebugSnapshots_AllDelegate.AddDynamic(Target_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateAll);
+	CurrentTarget->OnStateChangeDelegate.AddDynamic(Target_GameplayDebugWidget,&UCoreAndAbilityDebugWidget::UpdateState);
+	CurrentTarget->GetDebugComponent()->OnEffectAppearDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::ShowEffects_OnSelf);
+	CurrentTarget->GetDebugComponent()->OnAttributeDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateAttributeData);
+	CurrentTarget->GetDebugComponent()->OnResourcesDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateResourcesData);
+	CurrentTarget->GetDebugComponent()->OnAbilityCastDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::UpdateAbilityData);
+	CurrentTarget->GetDebugComponent()->OnEffectExpiredDebugSnapshotDelegate.AddDynamic(Target_GameplayDebugWidget, &UCoreAndAbilityDebugWidget::HideEffect_OnSelf);
 }
 void UScreenGameplayDebugWidget::UnsubscribeFromTarget()
 {
 	if (CurrentTarget == nullptr) return;
 	
-	CurrentTarget->OnDisplayDebugSnapshots_AllDelegate.RemoveDynamic(
+	CurrentTarget->GetDebugComponent()->OnDisplayDebugSnapshots_AllDelegate.RemoveDynamic(
 		Target_GameplayDebugWidget,
-		&UGameplayDebugWidget::UpdateAll
+		&UCoreAndAbilityDebugWidget::UpdateAll
 	);
 
 	CurrentTarget->OnStateChangeDelegate.RemoveDynamic(
 		Target_GameplayDebugWidget,
-		&UGameplayDebugWidget::UpdateState
+		&UCoreAndAbilityDebugWidget::UpdateState
 	);
 
-	CurrentTarget->OnEffectAppearDebugSnapshotDelegate.RemoveDynamic(
+	CurrentTarget->GetDebugComponent()->OnEffectAppearDebugSnapshotDelegate.RemoveDynamic(
 		Target_GameplayDebugWidget,
-		&UGameplayDebugWidget::ShowEffects_OnSelf
+		&UCoreAndAbilityDebugWidget::ShowEffects_OnSelf
 	);
 	
-	CurrentTarget->OnEffectExpiredDebugSnapshotDelegate.RemoveDynamic(
+	CurrentTarget->GetDebugComponent()->OnEffectExpiredDebugSnapshotDelegate.RemoveDynamic(
 		Target_GameplayDebugWidget,
-		&UGameplayDebugWidget::HideEffect_OnSelf
+		&UCoreAndAbilityDebugWidget::HideEffect_OnSelf
 	);
 
-	CurrentTarget->OnAttributeDebugSnapshotDelegate.RemoveDynamic(
+	CurrentTarget->GetDebugComponent()->OnAttributeDebugSnapshotDelegate.RemoveDynamic(
 		Target_GameplayDebugWidget,
-		&UGameplayDebugWidget::UpdateAttributeData
+		&UCoreAndAbilityDebugWidget::UpdateAttributeData
 	);
 
-	CurrentTarget->OnResourcesDebugSnapshotDelegate.RemoveDynamic(
+	CurrentTarget->GetDebugComponent()->OnResourcesDebugSnapshotDelegate.RemoveDynamic(
 		Target_GameplayDebugWidget,
-		&UGameplayDebugWidget::UpdateResourcesData
+		&UCoreAndAbilityDebugWidget::UpdateResourcesData
 	);
 
-	CurrentTarget->OnAbilityCastDebugSnapshotDelegate.RemoveDynamic(
+	CurrentTarget->GetDebugComponent()->OnAbilityCastDebugSnapshotDelegate.RemoveDynamic(
 		Target_GameplayDebugWidget,
-		&UGameplayDebugWidget::UpdateAbilityData
+		&UCoreAndAbilityDebugWidget::UpdateAbilityData
 	);
 	
 	CurrentTarget = nullptr;

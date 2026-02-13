@@ -19,10 +19,6 @@ class CLONE1_API UAttributesComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
-	UAttributesComponent();
-
 protected:
 	
 	UPROPERTY(EditDefaultsOnly)
@@ -30,18 +26,22 @@ protected:
 
 public:
 	UPROPERTY()
-	UEffectsComponent* EffectsComponent = nullptr;
+	TWeakObjectPtr<UEffectsComponent> EffectsComponent = nullptr;
 	
 	const float MaxSpeedAttribute = 100.f;
 	const float MaxHealthAttribute = 100.f;
 	const float MaxArmorAttribute = 100.f;
 	
-
-	
 	FOnAttributesChanged OnAttributesChangedDelegate;
 	
+	UPROPERTY(EditAnywhere)
+	UDataTable* ItemsDataTable;
 
-	
+public:
+	UAttributesComponent();
+
+	void SetEquipmentComponentLink(UEquipmentComponent* EquipmentComponent);
+	void SetEffectsComponentLink(UEffectsComponent* EffectsComponent);
 	UFUNCTION()
 	void IncreaseAttribute(EAttribute Attribute, float Value);
 	UFUNCTION()
@@ -65,10 +65,4 @@ public:
 	bool IsAnyBuffActiveForAttribute(EAttribute Attribute);
 	UFUNCTION()
 	const TMap<EAttribute,FFAttributeValue>& GetAttributes();
-
-	UPROPERTY(EditAnywhere)
-	UDataTable* ItemsDataTable;
-	
-	void SetEquipmentComponentLink(UEquipmentComponent* EquipmentComponent);
-	void SetEffectsComponentLink(UEffectsComponent* EffectsComponent);
 };

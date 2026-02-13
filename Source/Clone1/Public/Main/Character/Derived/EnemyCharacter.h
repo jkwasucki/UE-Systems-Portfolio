@@ -25,17 +25,18 @@ protected:
 	UAbilitySystemComponent* AbilitySystemComponent;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	USceneComponent* AbilityProjectileSpawnPoint;
+
 	
+public:
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
+	UAbilityData* AvailableAbility;
 	
+protected:
 	UFUNCTION()
 	void ApplyAbilityVisuals(UAbilityData* Ability,  FGuid InstanceID,  FAbilityTargetData& Targets);
 	UFUNCTION()
 	void CleanupAbilityVisuals(AActor* AbilityOwner, const FGuid& Identifier);
 public:
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
-	UAbilityData* AvailableAbility;
-	
-	
 	
 	AEnemyCharacter();
 	
@@ -53,5 +54,4 @@ public:
 	virtual void ApplyEffect_Implementation(AActor* EffectOrigin, FCharacterEffect& Effects, FGuid SourceInstanceID) override;	
 	virtual void OnRespondToHealthChange(float Delta) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent_Implementation() override;
-	
 };

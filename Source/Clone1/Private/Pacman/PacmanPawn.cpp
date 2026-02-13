@@ -4,6 +4,7 @@
 #include "PacMan/PacmanPawn.h"
 #include "Types/GenericTypes.h"
 #include "PaperFlipbookComponent.h"
+#include "Main/Character/Derived/MainCharacter.h"
 #include "Main/PlayerController/InputHandlerComponent.h"
 #include "PacMan/PacmanGame.h"
 
@@ -19,11 +20,11 @@ void APacmanPawn::BeginPlay()
 	
 }
 
-void APacmanPawn::HandleInputDelegates(UInputHandlerComponent* InputHandlerComponent)
+void APacmanPawn::HandleInputDelegates(UCharacterInputComponent* CharacterInput)
 {
-	if (InputHandlerComponent)
+	if (CharacterInput)
 	{
-		InputHandlerComponent->OnArrowPressDelegate.AddDynamic(GridMoverComponent, &UGridMoverComponent::SetDirection);
+		CharacterInput->OnArrowPressDelegate.AddDynamic(GridMoverComponent, &UGridMoverComponent::SetDirection);
 	}
 }
 
@@ -35,11 +36,18 @@ void APacmanPawn::SetupEntity(APacmanGame* GI)
 	
 	GridMoverComponent->OnDirectionValidatedDelegate.RemoveAll(this);
 	GridMoverComponent->OnDirectionValidatedDelegate.AddDynamic(this,&APacmanPawn::SetFlipbookByDir);
-	if (GI->PlayerController->InputHandlerComponent)
+	
+	if (GI->PlayerController)
 	{
-		HandleInputDelegates(GI->PlayerController->InputHandlerComponent);
-		SetFlipbookByDir(GridMoverComponent->CurrentDirection);
+		AMainCharacter* MC = GI->PlayerController->GetMainCharacter();
+		if (MC)
+		{
+			HandleInputDelegates(MC->GetCharacterInput());
+			SetFlipbookByDir(GridMoverComponent->CurrentDirection);
+		}
 	}
+	
+
 }
 
 

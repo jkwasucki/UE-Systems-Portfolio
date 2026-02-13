@@ -26,21 +26,11 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CLONE1_API UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
-
-public:	
-	
-	UInventoryComponent();
-
-protected:
-	
-	virtual void BeginPlay() override;
-	
-
 public:	
 	
 	// Connections
 	UPROPERTY()
-	UEquipmentComponent* EquipmentComponent = nullptr;
+	TWeakObjectPtr<UEquipmentComponent> EquipmentComponent = nullptr;
 	
 	//DELEGATES
 	FOnInventoryChanged OnInventoryChanged;
@@ -50,10 +40,6 @@ public:
 	
 	FItemStack LastRemovedStack; 
 	FOnItemConsumed OnItemConsumedDelegate;
-	
-	
-	
-	
 	
 	//PROPERTIES
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Inventory")
@@ -66,15 +52,17 @@ public:
 	TArray<FItemStack> Items;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UDataTable* ItemsDataTable = nullptr;
-	
+
+protected:
+	virtual void BeginPlay() override;
+public:
+	UInventoryComponent();
 	//API 
 	const FItemData* GetItemData(FName ItemID) const;
 	const FItemData* GetItemDataByIndex(int32 Index);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	const TArray<FItemStack>& GetItems();
 	const FItemStack* GetStackByIndex(int32 Index);
-	
-	
 	
 	// FUNCTIONALITY
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -112,6 +100,7 @@ public:
 	void ConsumeItem(int32 Index);
 
 	void SetEquipmentComponentLink(UEquipmentComponent* inEquipmentComponent);
+	
 	
 private:
 	bool HasSpace()

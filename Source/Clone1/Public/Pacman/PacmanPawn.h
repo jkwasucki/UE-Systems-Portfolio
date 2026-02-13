@@ -6,6 +6,7 @@
 #include "PacmanEntity.h"
 #include "PacMan/PacmanGame.h"
 #include "GameFramework/Pawn.h"
+#include "Main/Character/CharacterInputComponent.h"
 #include "PacmanPawn.generated.h"
 
 class APacmanGame;
@@ -45,7 +46,7 @@ public:
 	UFUNCTION()
 	void SetFlipbookByDir(EMoveDirection Dir);
 	UFUNCTION()
-	void HandleInputDelegates(UInputHandlerComponent* InputHandlerComponent);
+	void HandleInputDelegates(UCharacterInputComponent* CharacterInput);
 
 	virtual void SetupEntity(APacmanGame* GI) override;
 };

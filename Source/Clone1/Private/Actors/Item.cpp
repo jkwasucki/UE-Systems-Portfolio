@@ -30,7 +30,7 @@ AItem::AItem()
 	Collider->SetupAttachment(SceneRoot);
 
 
-	InteractableComponent = CreateDefaultSubobject<UInteractableComponent>("InteractionComponent");
+	InteractableComponent = CreateDefaultSubobject<UActorInteractionComponent>("InteractionComponent");
 }
 void AItem::BeginPlay()
 {
@@ -100,6 +100,31 @@ void AItem::DisablePhysics()
 	Mesh->SetSimulatePhysics(false);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+}
+
+void AItem::Interact_Implementation(ACharacter* Character)
+{
+	InteractableComponent->bIsInteractedWith = true;
+	InteractableComponent->OnInteractDelegate.Broadcast(Character);
+}
+
+void AItem::Highlight_Implementation(bool bState)
+{
+	InteractableComponent->OnHighlightDelegate.Broadcast(bState);
+}
+
+bool AItem::IsInteractedWith_Implementation()
+{
+	return InteractableComponent->bIsInteractedWith;
+}
+FText AItem::GetActionText_Implementation() 
+{
+	return InteractableComponent->ActionText;
+}
+
+FText AItem::GetActionKeyString_Implementation() 
+{
+	return InteractableComponent->ActionKey;
 }
 
 

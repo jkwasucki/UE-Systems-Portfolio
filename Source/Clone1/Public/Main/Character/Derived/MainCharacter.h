@@ -11,8 +11,12 @@
 #include "Interfaces/CharacterEffectReciverInterface.h"
 #include "Interfaces/DamageableInterface.h"
 #include "Interfaces/ResourceInterface.h"
+#include "Main/Character/InteractionComponent.h"
+#include "Main/Character/CharacterInputComponent.h"
 #include "Structs/FGameplayDebugSnapshot.h"
+#include "WeaponSystem/WeaponSystemComponent.h"
 #include "MainCharacter.generated.h"
+
 
 
 UCLASS()
@@ -20,27 +24,51 @@ class CLONE1_API AMainCharacter : public ABaseCharacter, public IResourceInterfa
 {
 	GENERATED_BODY()
 
-public:
-	// Sets default values for this character's properties
-	AMainCharacter();
-
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Components")
 	UAbilitySystemComponent* AbilitySystemComponent;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category= "Components")
+	UWeaponComponent* WeaponSystemComponent;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category= "Components")
+	UCharacterInputComponent* CharacterInputComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UInteractionComponent* InteractionComponent;
 	
+	
+public:
+
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USceneComponent* AbilityProjectileSpawnPoint;
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* WeaponMesh;
+	
+	FOnStateRequest OnStateRequestDelegate;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Equipment")
+	USkeletalMeshComponent* HeadMesh = nullptr;
+	UPROPERTY(VisibleAnywhere ,Category = "Equipment")
+	USkeletalMeshComponent* ChestMesh = nullptr;
+	UPROPERTY(VisibleAnywhere,Category = "Equipment")
+	USkeletalMeshComponent* LegsMesh = nullptr;
+	UPROPERTY(VisibleAnywhere,Category = "Equipment")
+	USkeletalMeshComponent* HandsMesh = nullptr;
+	UPROPERTY(VisibleAnywhere,Category = "Equipment")
+	USkeletalMeshComponent* FeetMesh = nullptr;
+	
+protected:
+	virtual void BeginPlay() override;
+	virtual void SetupPlayerInputComponent(UInputComponent* InInputComponent) override;
 	UFUNCTION()
 	void ApplyAbilityVisuals(UAbilityData* Ability, FGuid InstanceID, FAbilityTargetData& Targets);
 	UFUNCTION()
 	void CleanupAbilityVisuals(AActor* AbilityOwner, const FGuid& Identifier);
+
 public:	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USceneComponent* AbilityProjectileSpawnPoint;
+	AMainCharacter();
 	
 	// IResource Interface
-	 virtual float GetEnergy_Implementation() const override;
+	virtual float GetEnergy_Implementation() const override;
 	virtual void ModifyEnergy_Implementation(float Delta) override;
 	virtual float GetHealth_Implementation() const override;
 	virtual void ModifyHealth_Implementation(float Delta) override;
@@ -55,46 +83,40 @@ public:
 	
 	virtual void OnRespondToHealthChange(float Delta) override;
 	
-
-	FOnStateRequest OnStateRequestDelegate;
+	UFUNCTION(BlueprintCallable, Category="Input")
+	void OnWeaponInput(EWeaponInputCommand Command);
 	
 	
-	UPROPERTY(VisibleAnywhere, Category = "Equipment")
-	USkeletalMeshComponent* HeadMesh = nullptr;
-	UPROPERTY(VisibleAnywhere ,Category = "Equipment")
-	USkeletalMeshComponent* ChestMesh = nullptr;
-	UPROPERTY(VisibleAnywhere,Category = "Equipment")
-	USkeletalMeshComponent* LegsMesh = nullptr;
-	UPROPERTY(VisibleAnywhere,Category = "Equipment")
-	USkeletalMeshComponent* HandsMesh = nullptr;
-	UPROPERTY(VisibleAnywhere,Category = "Equipment")
-	USkeletalMeshComponent* FeetMesh = nullptr;
 	
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	// On Input
+	UFUNCTION()
+	void OnAbilityInput(FGameplayTag SlotTag, EAbilityInputEvent Event);
+	UFUNCTION()
+	void OnInteractInput();
+	
+	
 	
 	UFUNCTION()
 	void TryUseAbility(FGameplayTag SlotTag);
 	UFUNCTION()
 	void SetSkeletalDefaults(USkeletalMeshComponent* SkeletalMesh);
 	UFUNCTION()
-	void  EquipMesh(USkeletalMesh* MeshToEquip, EEquipmentType Type);
+	void EquipMesh(USkeletalMesh* MeshToEquip, EEquipmentType Type);
 	UFUNCTION()
 	void UnEquipMesh(EEquipmentType Type);
 	UFUNCTION()
 	void ApplyAttributes();
-	UFUNCTION()
-	void ResolveAbilityInput(FGameplayTag SlotTag, EAbilityInputEvent Event);
 	
+	UFUNCTION()
+	void DisplayWeaponVisuals(UWeaponInstance* WeaponInstance);
 	UFUNCTION()
 	UAbilitySystemComponent* GetAbilitySystem();
+	UFUNCTION()
+	UWeaponComponent* GetWeaponSystem();
+	UFUNCTION()
+	UCharacterInputComponent* GetCharacterInput();
+	UFUNCTION()
+	UInteractionComponent* GetInteractionComponent();
 	
-
-	UFUNCTION()
-	void AbilityCastFailDebugSnapshot( UAbilityData* Ability, EAbilityFailureReason Reason);
-	UFUNCTION()
-	void AbilityCastDebugSnapshot(UAbilityData* Ability,  FGuid InstanceID, FAbilityTargetData& Targets );
-
-
 };
 

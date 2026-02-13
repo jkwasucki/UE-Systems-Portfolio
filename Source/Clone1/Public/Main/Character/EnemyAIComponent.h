@@ -13,21 +13,18 @@ class CLONE1_API UEnemyAIComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
-	UEnemyAIComponent();
-	
+
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
 	UPROPERTY()
-	ABaseCharacter* BaseCharacter = nullptr;
+	TWeakObjectPtr<ABaseCharacter> BaseCharacter;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
 	USphereComponent* AIAttackTriggerZone;
-	
 	UPROPERTY()
-	TArray<AActor*> FoesInRange;
-	
+	TArray<TWeakObjectPtr<AActor>> FoesInRange;
+
+protected:
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void BeginPlay() override;
 	UFUNCTION()
 	void HandleState();
 	UFUNCTION()
@@ -36,14 +33,8 @@ protected:
 	void TryAttacking();
 	UFUNCTION()
 	void FaceFoe(float DeltaTime);
-	
-public:	
-	
-	
-	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
-	
+public:
+	UEnemyAIComponent();
 	UFUNCTION()
 	void Initialize(ABaseCharacter* InBaseCharacter);
 	
@@ -59,8 +50,6 @@ public:
 	AActor* OtherActor,
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex);
-	
-	
 	
 	UFUNCTION()
 	AActor* GetClosestFoe();

@@ -7,6 +7,7 @@
 #include "Main/PlayerController/MainPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Main/Character/Derived/MainCharacter.h"
 
 UHUDComponent::UHUDComponent()
 {
@@ -14,68 +15,72 @@ UHUDComponent::UHUDComponent()
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 }
 
-void UHUDComponent::BeginPlay()
+void UHUDComponent::Init(AMainPlayerController* InPC)
 {
-	Super::BeginPlay();
-	PC = Cast<AMainPlayerController>(GetOwner());
+	if (!InPC) return;
+	PC = InPC;
+	
 	SetupHUD();
 	PassReferences();
 	
-	SetComponentTickEnabled(true);
-	PC->InputHandlerComponent->OnInventoryDelegate.AddDynamic(this, &UHUDComponent::ToggleInventory);
+	AMainCharacter* MainCharacter = PC->GetMainCharacter();
+	if (MainCharacter)
+	{
+		MainCharacter->GetCharacterInput()->OnInventoryDelegate.AddDynamic(this, &UHUDComponent::OnToggleInventory);
+		MainCharacter->GetInteractionComponent()->OnInteractableFocused.AddDynamic(this,&UHUDComponent::OnNewInteractable);
+		MainCharacter->GetInteractionComponent()->OnInteractableFocusEndDelegate.AddDynamic(this,&UHUDComponent::HideInteractionTooltip);
+	}
 }
 
 
 void UHUDComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
-                                  FActorComponentTickFunction* ThisTickFunction)
+FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	UInteractableComponent* NewFocusedActor = PC->InteractionComponent->GetBestInteractable();
-	FocusedActorComponent = NewFocusedActor;
-	HandleInteractionTooltip();
-	
-	
+
 	UpdateInteractableTooltipLocation();
 }
 
 void UHUDComponent::HandleInteractionTooltip()
 {
-	if (FocusedActorComponent && !FocusedActorComponent->bIsInteractedWith)
+	if (CurrentInteractable.IsValid())
 	{
-		if (PC->InteractionComponent->NearbyInteractables.Num() == 0 )
+		if (!IInteractableInterface::Execute_IsInteractedWith(CurrentInteractable.Get()))
+		{
+			ShowInteractionTooltip(CurrentInteractable.Get());
+		}
+		else
 		{
 			HideInteractionTooltip();
-			return;
 		}
-		ShowInteractionTooltip(FocusedActorComponent);
 	}
-	else
-	{
+	
+	if (CurrentInteractable == nullptr)
 		HideInteractionTooltip();
-	}
 }
-
-
-
 
 void UHUDComponent::UpdateInteractableTooltipLocation()
 {
-	if (FocusedActorComponent)
+	if (CurrentInteractable.IsValid())
 	{
 		FVector2D ScreenPos;
-		UGameplayStatics::ProjectWorldToScreen(PC,FocusedActorComponent->GetOwner()->GetActorLocation(),ScreenPos);
+		UGameplayStatics::ProjectWorldToScreen(PC.Get(),CurrentInteractable.Get()->GetActorLocation(),ScreenPos);
 		
 		InteractionTooltipWidget->SetPositionInViewport(ScreenPos);
-		
 	}
+}
+
+void UHUDComponent::OnNewInteractable(AActor* Interactable)
+{
+	CurrentInteractable = Interactable;
+	HandleInteractionTooltip();
 }
 
 void UHUDComponent::SetupHUD()
 {
 	if (InventoryScreenHUDComponent)
 	{
-		InventoryScreenWidget = CreateWidget<UInventoryScreenWidget>(PC, InventoryScreenHUDComponent);
+		InventoryScreenWidget = CreateWidget<UInventoryScreenWidget>(PC.Get(), InventoryScreenHUDComponent);
 		if (InventoryScreenWidget)
 		{
 			InventoryScreenWidget->AddToViewport();
@@ -85,7 +90,7 @@ void UHUDComponent::SetupHUD()
 	
 	if (InteractionTooltipHUDComponent)
 	{
-		InteractionTooltipWidget = CreateWidget<UInteractionTooltipWidget>(PC, InteractionTooltipHUDComponent);
+		InteractionTooltipWidget = CreateWidget<UInteractionTooltipWidget>(PC.Get(), InteractionTooltipHUDComponent);
 		if (InteractionTooltipWidget)
 		{
 			InteractionTooltipWidget->AddToViewport();
@@ -95,7 +100,7 @@ void UHUDComponent::SetupHUD()
 	
 	if (ScreenGameplayDebugHUDComponent)
 	{
-		ScreenGameplayDebugWidget = CreateWidget<UScreenGameplayDebugWidget>(PC, ScreenGameplayDebugHUDComponent);
+		ScreenGameplayDebugWidget = CreateWidget<UScreenGameplayDebugWidget>(PC.Get(), ScreenGameplayDebugHUDComponent);
 		if (ScreenGameplayDebugWidget)
 		{
 			ScreenGameplayDebugWidget->AddToViewport();
@@ -106,7 +111,7 @@ void UHUDComponent::SetupHUD()
 
 
 
-void UHUDComponent::ToggleInventory()
+void UHUDComponent::OnToggleInventory()
 {
 	if (InventoryScreenWidget->IsVisible())
 	{
@@ -140,7 +145,7 @@ void UHUDComponent::ToggleInventory()
 	}
 }
 
-void UHUDComponent::ShowInteractionTooltip(UInteractableComponent* inFocusedActor)
+void UHUDComponent::ShowInteractionTooltip(AActor* inFocusedActor)
 {
 	FText KeyText = IInteractableInterface::Execute_GetActionKeyString(inFocusedActor);
 	FText ActionText = IInteractableInterface::Execute_GetActionText(inFocusedActor);
@@ -161,11 +166,11 @@ void UHUDComponent::PassReferences()
 {
 	if (InventoryScreenWidget)
 	{
-		InventoryScreenWidget->Init(PC);
+		InventoryScreenWidget->Init(PC.Get());
 	}
 	if (ScreenGameplayDebugWidget)
 	{
-		ScreenGameplayDebugWidget->Init(PC);
+		ScreenGameplayDebugWidget->Init(PC.Get());
 	}
 }
 
