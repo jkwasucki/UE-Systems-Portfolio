@@ -15,8 +15,8 @@ APacmanGame::APacmanGame()
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	RootComponent = SceneRoot;
 	
-	PacmanBoard = CreateDefaultSubobject<UPacmanBoardComponent>(TEXT("PacmanBoardComponent"));
-	PacmanBoard->SetupAttachment(RootComponent);
+	PacmanBoardComponent = CreateDefaultSubobject<UPacmanBoardComponent>(TEXT("PacmanBoardComponent"));
+	PacmanBoardComponent->SetupAttachment(RootComponent);
 	
 	SceneCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureComponent2D"));
 	SceneCaptureComponent->SetupAttachment(RootComponent);
@@ -26,14 +26,14 @@ void APacmanGame::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PacmanBoard->OnCollected.AddDynamic(this, &APacmanGame::IncreaseScore);
+	PacmanBoardComponent->OnCollected.AddDynamic(this, &APacmanGame::IncreaseScore);
 }
 
 void APacmanGame::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (PacmanBoard)
+	if (PacmanBoardComponent)
 	{
-		PacmanBoard->OnPelletsCollectedDelegate.RemoveAll(this);
+		PacmanBoardComponent->OnPelletsCollectedDelegate.RemoveAll(this);
 	}
 	
 
@@ -115,7 +115,7 @@ void APacmanGame::UpdateGhostState()
 void APacmanGame::InitializeGame()
 {
 	
-	if (!PacmanBoard) return;
+	if (!PacmanBoardComponent) return;
 
 	UWorld* World = GetWorld();
 	if (!World || !World->IsGameWorld()) return;
@@ -126,9 +126,9 @@ void APacmanGame::InitializeGame()
 	if (!MainPC) return;
 	PlayerController = MainPC;
 	
-	PacmanBoard->InitializeBoard(this);
-	PacmanBoard->OnPelletsCollectedDelegate.RemoveAll(this);
-	PacmanBoard->OnPelletsCollectedDelegate.AddDynamic(this, &APacmanGame::RestartGame);
+	PacmanBoardComponent->InitializeBoard(this);
+	PacmanBoardComponent->OnPelletsCollectedDelegate.RemoveAll(this);
+	PacmanBoardComponent->OnPelletsCollectedDelegate.AddDynamic(this, &APacmanGame::RestartGame);
 	
 	if (!Pacman)
 		SpawnPacman();
@@ -145,7 +145,7 @@ void APacmanGame::QuitGame()
 	CurrentGhostsState = EGhostState::None;
 	PreviousGhostsState = EGhostState::None;
 	
-	PacmanBoard->Reset();	
+	PacmanBoardComponent->Reset();	
 	Lives = 3;
 	Score = 0;
 	
@@ -168,8 +168,8 @@ void APacmanGame::RestartGame()
 	CurrentGhostsState = EGhostState::None;
 	PreviousGhostsState = EGhostState::None;
 	
-	if (PacmanBoard->GetPelletCount() == 0 || Lives == 0)
-		PacmanBoard->Reset();	
+	if (PacmanBoardComponent->GetPelletCount() == 0 || Lives == 0)
+		PacmanBoardComponent->Reset();	
 	
 	if (Lives == 0)
 	{
@@ -259,13 +259,13 @@ void APacmanGame::StopGame()
 void APacmanGame::SpawnPacman()
 {
 	check(PacmanPawnClass);
-	check(PacmanBoard);
+
 
 	const APacmanPawn* Defaults =
 		PacmanPawnClass->GetDefaultObject<APacmanPawn>();
 
 	const FVector SpawnLocation =
-		PacmanBoard->GridToWorld(Defaults->SpawnGridPoint);
+		PacmanBoardComponent->GridToWorld(Defaults->SpawnGridPoint);
 
 	const FTransform SpawnTransform(SpawnLocation);
 	
@@ -297,7 +297,7 @@ void APacmanGame::SpawnGhosts()
 		
 		const AGhostPawn* Defaults = GhostClass->GetDefaultObject<AGhostPawn>();
 		
-		FVector SpawnLocation = PacmanBoard->GridToWorld(Defaults->SpawnGridPoint) + FVector(16.f,0,0);
+		FVector SpawnLocation = PacmanBoardComponent->GridToWorld(Defaults->SpawnGridPoint) + FVector(16.f,0,0);
 		
 		AGhostPawn* Ghost =
 	GetWorld()->SpawnActorDeferred<AGhostPawn>(
@@ -325,11 +325,11 @@ void APacmanGame::SpawnGhosts()
 bool APacmanGame::IsWalkable(FIntPoint XY, APacmanEntity* PacmanEntity)
 {
 	if (!PacmanEntity) return false;
-	const int32 Index = PacmanBoard->IndexOfTileByCoordinate(XY.X, XY.Y);
-	if (!PacmanBoard->Tiles.IsValidIndex(Index))
+	const int32 Index = PacmanBoardComponent->IndexOfTileByCoordinate(XY.X, XY.Y);
+	if (!PacmanBoardComponent->Tiles.IsValidIndex(Index))
 		return false;
 
-	const ETileType TileType = PacmanBoard->Tiles[Index];
+	const ETileType TileType = PacmanBoardComponent->Tiles[Index];
 
 	// Pacman rules
 	if (PacmanEntity->Entity == EPacmanEntity::Pacman)
@@ -338,7 +338,7 @@ bool APacmanGame::IsWalkable(FIntPoint XY, APacmanEntity* PacmanEntity)
 			return false;
 
 		if (TileType == ETileType::Pellet || TileType == ETileType::PowerPellet)
-			PacmanBoard->RemovePellet(XY);
+			PacmanBoardComponent->RemovePellet(XY);
 
 		return true;
 	}
@@ -418,7 +418,7 @@ FIntPoint APacmanGame::GetHouseEntrance() const
 
 FIntPoint APacmanGame::GetBoardDimensions() const
 {
-	return FIntPoint(PacmanBoard->Width, PacmanBoard->Height);
+	return FIntPoint(PacmanBoardComponent->Width, PacmanBoardComponent->Height);
 }
 
 APacmanEntity* APacmanGame::GetPacman() const
@@ -430,27 +430,27 @@ APacmanEntity* APacmanGame::GetPacman() const
 
 FVector APacmanGame::GridToWorld(FIntPoint Point) const
 {
-	return PacmanBoard->GridToWorld(Point);
+	return PacmanBoardComponent->GridToWorld(Point);
 }
 
 float APacmanGame::GetSpeed(ESpeedOfState State) const
 {
 	switch (State)
 	{
-		case ESpeedOfState::Frightened: return FearTilesPerSecond * PacmanBoard->TileSize;break;
-		case ESpeedOfState::Eaten: return EyesTilesPerSecond * PacmanBoard->TileSize;break;
-		case ESpeedOfState::Base: return DefaultTilesPerSecond * PacmanBoard->TileSize;break;
+		case ESpeedOfState::Frightened: return FearTilesPerSecond * PacmanBoardComponent->TileSize;break;
+		case ESpeedOfState::Eaten: return EyesTilesPerSecond * PacmanBoardComponent->TileSize;break;
+		case ESpeedOfState::Base: return DefaultTilesPerSecond * PacmanBoardComponent->TileSize;break;
 	}
-	return DefaultTilesPerSecond * PacmanBoard->TileSize;
+	return DefaultTilesPerSecond * PacmanBoardComponent->TileSize;
 }
 
 bool APacmanGame::IsHouseDoor(FIntPoint XY) const
 {
-	const int32 Index = PacmanBoard->IndexOfTileByCoordinate(XY.X, XY.Y);
-	if (!PacmanBoard->Tiles.IsValidIndex(Index))
+	const int32 Index = PacmanBoardComponent->IndexOfTileByCoordinate(XY.X, XY.Y);
+	if (!PacmanBoardComponent->Tiles.IsValidIndex(Index))
 		return false;
 
-	const ETileType TileType = PacmanBoard->Tiles[Index];
+	const ETileType TileType = PacmanBoardComponent->Tiles[Index];
 
 
 	if (TileType == ETileType::HouseDoor)
@@ -461,7 +461,7 @@ bool APacmanGame::IsHouseDoor(FIntPoint XY) const
 
 bool APacmanGame::GetTeleportExit(const FIntPoint& InPoint, FIntPoint& OutPoint) const
 {
-	PacmanBoard->GetTeleportExit(InPoint, OutPoint);
+	PacmanBoardComponent->GetTeleportExit(InPoint, OutPoint);
 	
 	if (OutPoint == FIntPoint(27, 16) || OutPoint == FIntPoint(0, 16))
 		return true;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractionDefinition.h"
 #include "OtherHUD/GameplayDebug/ScreenGameplayDebugWidget.h"
 #include "OtherHUD/InteractionTooltipWidget.h"
 #include "Inventory/HUD/InventoryScreenWidget.h"
@@ -21,6 +22,8 @@ protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	UPROPERTY()
 	TWeakObjectPtr<AActor> CurrentInteractable = nullptr;
+	UPROPERTY()
+	TWeakObjectPtr<UInteractionDefinition> InteractionDefinition;
 	
 public:	
 	UPROPERTY()
@@ -50,7 +53,7 @@ public:
 	void Init(AMainPlayerController* InPC);
 	
 	UFUNCTION()
-	void OnNewInteractable(AActor* Interactable);
+	void OnNewInteractable(UInteractionDefinition* Definition,AActor* Interactable);
 	UFUNCTION()
 	void OnToggleInventory();
 	

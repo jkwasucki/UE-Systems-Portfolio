@@ -43,16 +43,18 @@ FActorComponentTickFunction* ThisTickFunction)
 
 void UHUDComponent::HandleInteractionTooltip()
 {
+	GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Red,TEXT("NOT NULL"));
 	if (CurrentInteractable.IsValid())
 	{
+		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Red,TEXT("NOT NULL1"));
 		if (!IInteractableInterface::Execute_IsInteractedWith(CurrentInteractable.Get()))
 		{
+			GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Red,TEXT("NOT NULL2"));
 			ShowInteractionTooltip(CurrentInteractable.Get());
+			return;
 		}
-		else
-		{
-			HideInteractionTooltip();
-		}
+		HideInteractionTooltip();
+		return;
 	}
 	
 	if (CurrentInteractable == nullptr)
@@ -70,9 +72,12 @@ void UHUDComponent::UpdateInteractableTooltipLocation()
 	}
 }
 
-void UHUDComponent::OnNewInteractable(AActor* Interactable)
+void UHUDComponent::OnNewInteractable(UInteractionDefinition* Definition, AActor* Interactable)
 {
+	
 	CurrentInteractable = Interactable;
+	InteractionDefinition = Definition;
+	
 	HandleInteractionTooltip();
 }
 
@@ -147,11 +152,9 @@ void UHUDComponent::OnToggleInventory()
 
 void UHUDComponent::ShowInteractionTooltip(AActor* inFocusedActor)
 {
-	FText KeyText = IInteractableInterface::Execute_GetActionKeyString(inFocusedActor);
-	FText ActionText = IInteractableInterface::Execute_GetActionText(inFocusedActor);
-
+	if (!InteractionDefinition.IsValid()) return;
 	InteractionTooltipWidget->SetVisibility(ESlateVisibility::Visible);
-	InteractionTooltipWidget->SetDataBP(KeyText, ActionText);
+	InteractionTooltipWidget->SetDataBP(FText::FromString("E"), InteractionDefinition->Prompt);
 }
 
 void UHUDComponent::HideInteractionTooltip()

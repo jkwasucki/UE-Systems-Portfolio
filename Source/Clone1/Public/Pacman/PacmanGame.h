@@ -25,11 +25,27 @@ UCLASS()
 class CLONE1_API APacmanGame : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	APacmanGame();
 
 protected:
+	UPROPERTY()
+	USceneComponent* SceneRoot = nullptr;
+	UPROPERTY()
+	APacmanPawn* Pacman = nullptr;
+	UPROPERTY()
+	TArray<AGhostPawn*> SpawnedGhosts;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APacmanPawn> PacmanPawnClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pacman|Ghosts")
+	TArray<TSubclassOf<AGhostPawn>> GhostClasses;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPacmanBoardComponent* PacmanBoardComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UTextureRenderTarget2D* RenderTarget;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "Camera")
+	USceneCaptureComponent2D* SceneCaptureComponent;
+	
 	
 	
 	FIntPoint HouseEntrancePoint = FIntPoint(13,19); // Just before doors
@@ -56,41 +72,24 @@ protected:
 	UPROPERTY()
 	int32 Lives = 3;
 	
-	
-	
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<APacmanPawn> PacmanPawnClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pacman|Ghosts")
-	TArray<TSubclassOf<AGhostPawn>> GhostClasses;
-	
-	
-	
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UPacmanBoardComponent* PacmanBoard;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	UTextureRenderTarget2D* RenderTarget;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "Camera")
-	USceneCaptureComponent2D* SceneCaptureComponent;
-	
-	
-	UPROPERTY()
-	USceneComponent* SceneRoot = nullptr;
-	UPROPERTY()
-	APacmanPawn* Pacman = nullptr;
-	UPROPERTY()
-	TArray<AGhostPawn*> SpawnedGhosts;
-	
-	
 	FTimerHandle GhostReleaseTimerHandle;
 	FTimerHandle GhostsFearTimerHandle;
+
+public:
+	UPROPERTY()
+	AMainPlayerController* PlayerController = nullptr;
 	
+	//Delegates
+	FOnGameStart OnGameStartDelegate;
+	FOnGameEnd OnGameEndDelegate;
+	FOnChangeGhostState OnChangeGhostStateDelegate;
+	FOnLivesChanged OnLivesChangedDelegate;
+	FOnScoreChanged OnScoreChangedDelegate;
+	FOnGameStopped OnGameStoppedDelegate;
+protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick( float DeltaSeconds ) override;
-	
-	
 	UFUNCTION()
 	void UpdateGhostState();
 	UFUNCTION()
@@ -114,21 +113,8 @@ protected:
 	UFUNCTION()
 	void StopEntities();
 
-	
-	
 public:
-	UPROPERTY()
-	AMainPlayerController* PlayerController = nullptr;
-	
-	//Delegates
-	FOnGameStart OnGameStartDelegate;
-	FOnGameEnd OnGameEndDelegate;
-	FOnChangeGhostState OnChangeGhostStateDelegate;
-	FOnLivesChanged OnLivesChangedDelegate;
-	FOnScoreChanged OnScoreChangedDelegate;
-	FOnGameStopped OnGameStoppedDelegate;
-
-	
+	APacmanGame();
 	UFUNCTION()
 	void InitializeGame();
 	UFUNCTION()

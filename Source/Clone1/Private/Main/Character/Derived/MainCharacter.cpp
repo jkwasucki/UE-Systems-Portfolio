@@ -11,7 +11,7 @@
 #include "Main/PlayerController/MainPlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "Structs/FAnimationTags.h"
-#include "Main/Character/InteractionComponent.h"
+#include "Main/Character/InteractorComponent.h"
 #include "WeaponSystem/WeaponSystemComponent.h"
 #include "Main/Character/CharacterDebugComponent.h"
 
@@ -44,7 +44,7 @@ AMainCharacter::AMainCharacter()
 	
 	CharacterInputComponent = CreateDefaultSubobject<UCharacterInputComponent>(TEXT("InputComponent"));
 	
-	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
+	InteractionComponent = CreateDefaultSubobject<UInteractorComponent>("InteractionComponent");
 	InteractionComponent->SetComponentTickEnabled(true);
 	
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>("WeaponMesh");
@@ -210,7 +210,7 @@ UCharacterInputComponent* AMainCharacter::GetCharacterInput()
 	return CharacterInputComponent;
 }
 
-UInteractionComponent* AMainCharacter::GetInteractionComponent()
+UInteractorComponent* AMainCharacter::GetInteractionComponent()
 {
 	return InteractionComponent;
 }

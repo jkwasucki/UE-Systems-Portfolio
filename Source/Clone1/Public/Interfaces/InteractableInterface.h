@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractionDefinition.h"
 #include "UObject/Interface.h"
 #include "InteractableInterface.generated.h"
 
@@ -22,10 +23,6 @@ class CLONE1_API IInteractableInterface
 	
 public:
 	
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
-	FText GetActionText();
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
-	FText GetActionKeyString();
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 	bool IsInteractedWith();
@@ -34,6 +31,9 @@ public:
 	void Highlight(bool bState);
 	
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
-	 void Interact(ACharacter* Character);
-	
+	 TSoftObjectPtr<UInteractionDefinition> GetInteractionDefinition();
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
+	FText GetHUDPrompt();
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
+	void OnInteractionExecuted();
 };

@@ -11,7 +11,7 @@
 #include "Interfaces/CharacterEffectReciverInterface.h"
 #include "Interfaces/DamageableInterface.h"
 #include "Interfaces/ResourceInterface.h"
-#include "Main/Character/InteractionComponent.h"
+#include "Main/Character/InteractorComponent.h"
 #include "Main/Character/CharacterInputComponent.h"
 #include "Structs/FGameplayDebugSnapshot.h"
 #include "WeaponSystem/WeaponSystemComponent.h"
@@ -32,7 +32,7 @@ protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category= "Components")
 	UCharacterInputComponent* CharacterInputComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UInteractionComponent* InteractionComponent;
+	UInteractorComponent* InteractionComponent;
 	
 	
 public:
@@ -116,7 +116,7 @@ public:
 	UFUNCTION()
 	UCharacterInputComponent* GetCharacterInput();
 	UFUNCTION()
-	UInteractionComponent* GetInteractionComponent();
+	UInteractorComponent* GetInteractionComponent();
 	
 };
 

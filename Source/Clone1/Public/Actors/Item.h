@@ -16,20 +16,15 @@ class CLONE1_API AItem : public AActor, public IInteractableInterface
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AItem();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UActorInteractionComponent* InteractableComponent;
 	UFUNCTION()
-	void OnInteract(ACharacter* Char);
-	UFUNCTION()
 	void OnHighlight(bool bState);
-	
 	
 
 public:
@@ -53,17 +48,11 @@ public:
 	void EnablePhysics();
 	UFUNCTION()
 	void DisablePhysics();
-	
-	UFUNCTION(BlueprintCallable)
-	void PickupItem(ACharacter* Character);
-	
 	UFUNCTION(BlueprintCallable)
 	void InitItem(const FItemStack& InStack);
 	
-	virtual FText GetActionText_Implementation()  override;
-	virtual FText GetActionKeyString_Implementation()  override;
-	
-	virtual void Interact_Implementation(ACharacter* Character) override;
+	// Interactable Interface 
+	virtual TSoftObjectPtr<UInteractionDefinition> GetInteractionDefinition_Implementation() override;
 	virtual void Highlight_Implementation(bool bState) override;
 	virtual bool IsInteractedWith_Implementation() override;
 };

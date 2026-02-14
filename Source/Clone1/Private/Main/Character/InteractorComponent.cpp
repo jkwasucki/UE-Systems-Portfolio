@@ -1,25 +1,25 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Main/Character/InteractionComponent.h"
+#include "Main/Character/InteractorComponent.h"
 #include "Interfaces/InteractableInterface.h"
 #include "Main/PlayerController/MainPlayerController.h"
 #include "Main/Character/Derived/MainCharacter.h"
 
 
-UInteractionComponent::UInteractionComponent()
+UInteractorComponent::UInteractorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
 
-void UInteractionComponent::BeginPlay()
+void UInteractorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	SetComponentTickEnabled(true);
 }
 
-void UInteractionComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
+void UInteractorComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -29,14 +29,14 @@ void UInteractionComponent::TickComponent(float DeltaTime, enum ELevelTick TickT
 	HandleHighlight();
 }
 
-void UInteractionComponent::Init(AMainCharacter* InOwner)
+void UInteractorComponent::Init(AMainCharacter* InOwner)
 {
 	if (!IsValid(InOwner)) return;
 	Owner = InOwner;
 }
 
 
-void UInteractionComponent::Interact()
+void UInteractorComponent::Interact()
 {
 	if (!Owner.IsValid())
 		return;
@@ -50,67 +50,74 @@ void UInteractionComponent::Interact()
 	if (!OwnerCharacter)
 		return;
 	
-	IInteractableInterface::Execute_Interact(Best, OwnerCharacter);
+	if (IsValid(CurrentLoadedDefinition))
+	{
+		ExecuteInteraction(CurrentLoadedDefinition, Best);
+	}
+}
+void UInteractorComponent::ExecuteInteraction(UInteractionDefinition* InteractionDefinition, AActor* Target)
+{
+	if (UInteractionInstance* NewInteraction = NewObject<UInteractionInstance>(this))
+	{
+		NewInteraction->Init(GetOwner(),Target,InteractionDefinition);
+		InstancedInteractions.Add(NewInteraction);
+		
+		OnInteractableFocusEndDelegate.Broadcast();
+	}
 }
 
-
-void UInteractionComponent::QueryInteractableUnderCursor()
+void UInteractorComponent::QueryInteractableUnderCursor()
 {
 	AActor* Best = GetBestInteractable();
-
-	if (Best == nullptr)
-	{
-		OnInteractableFocusEndDelegate.Broadcast();
-		return;	
-	}
-	
-	
-
-	if (Best == CurrentFocusedInteractable)
+	if (Best == CurrentFocusedInteractable.Get())
 		return;
 	
+	if (CurrentFocusedInteractable.IsValid())
+	{
+		OnInteractableFocusEndDelegate.Broadcast();
+	}
 
 	PreviousFocusedInteractable = CurrentFocusedInteractable;
 	CurrentFocusedInteractable = Best;
 
-	if (CurrentFocusedInteractable.IsValid() && PreviousFocusedInteractable.IsValid())
+	// Clear current definition
+	CurrentLoadedDefinition = nullptr;
+
+	// Handle new focus
+	if (CurrentFocusedInteractable.IsValid())
 	{
-		if (CurrentFocusedInteractable.Get() != PreviousFocusedInteractable.Get())
+		AActor* Actor = CurrentFocusedInteractable.Get();
+
+		if (Actor->Implements<UInteractableInterface>())
 		{
-			OnInteractableFocused.Broadcast(CurrentFocusedInteractable.Get());
+			TSoftObjectPtr<UInteractionDefinition> SoftDef =
+				IInteractableInterface::Execute_GetInteractionDefinition(Actor);
+
+			if (SoftDef.IsValid())
+			{
+				CurrentLoadedDefinition = SoftDef.LoadSynchronous();
+			}
 		}
+
+		OnInteractableFocused.Broadcast(CurrentLoadedDefinition, Actor);
 	}
 }
 
 
-void UInteractionComponent::HandleHighlight()
-{
-	
-	if (CurrentFocusedInteractable == nullptr) return;
 
-	if (PreviousFocusedInteractable == CurrentFocusedInteractable)
-		IInteractableInterface::Execute_Highlight(PreviousFocusedInteractable.Get(),false);
-	
-	if (NearbyInteractables.IsEmpty())
-	{
-		if (CurrentFocusedInteractable != nullptr)
-		{
-			if (CurrentFocusedInteractable.IsValid())
-				IInteractableInterface::Execute_Highlight(CurrentFocusedInteractable.Get(),false);
-		}
-		
-		CurrentFocusedInteractable = nullptr;
+void UInteractorComponent::HandleHighlight()
+{
+	if (CurrentFocusedInteractable == PreviousFocusedInteractable)
 		return;
-	}
+	
 	if (PreviousFocusedInteractable.IsValid())
 		IInteractableInterface::Execute_Highlight(PreviousFocusedInteractable.Get(),false);
 	if (CurrentFocusedInteractable.IsValid())
 		IInteractableInterface::Execute_Highlight(CurrentFocusedInteractable.Get(),true);
-	
 }
 
 
-AActor* UInteractionComponent::GetBestInteractable()
+AActor* UInteractorComponent::GetBestInteractable()
 {
 	if (!Owner.IsValid()) return nullptr;
 	AActor* Best = nullptr;
@@ -136,9 +143,20 @@ AActor* UInteractionComponent::GetBestInteractable()
 	return Best;
 }
 
+void UInteractorComponent::AddInteractable(AActor* Actor)
+{
+	if (!IsValid(Actor)) return;
+	NearbyInteractables.AddUnique(Actor);
+}
+
+void UInteractorComponent::RemoveInteractable(AActor* Actor)
+{
+	NearbyInteractables.Remove(Actor);
+}
 
 
-void UInteractionComponent::ProcessResultUnderCursor(bool bHit,  const FHitResult& Hit)
+
+void UInteractorComponent::ProcessResultUnderCursor(bool bHit,  const FHitResult& Hit)
 {
 	bool bHitPawn = false;
 	APawn* Pawn = nullptr;
@@ -175,7 +193,7 @@ void UInteractionComponent::ProcessResultUnderCursor(bool bHit,  const FHitResul
 	}
 }
 
-void UInteractionComponent::QueryEntityUnderCursor()
+void UInteractorComponent::QueryEntityUnderCursor()
 {
 	if (!Owner.IsValid()) return;
 	AMainCharacter* Character = Owner.Get();
@@ -208,7 +226,7 @@ void UInteractionComponent::QueryEntityUnderCursor()
 	);
 }
 
-void UInteractionComponent::GetEntityData(AActor* Actor)
+void UInteractorComponent::GetEntityData(AActor* Actor)
 {
 	if (Actor->Implements<UDebugInfoProviderInterface>())
 	{

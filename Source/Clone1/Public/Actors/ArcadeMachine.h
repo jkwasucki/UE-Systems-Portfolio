@@ -24,35 +24,31 @@ protected:
 	UPROPERTY()
 	bool bIsActive = false;
 	UPROPERTY()
-	USceneComponent* SceneRoot;
+	TObjectPtr<USceneComponent> SceneRoot;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USphereComponent* Collision;
+	TObjectPtr<USphereComponent> Collision;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UActorInteractionComponent* InteractionComponent;
+	TObjectPtr<UActorInteractionComponent> InteractionComponent;
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> PacmanHUDClass;
 	UPROPERTY(VisibleAnywhere, Category="UI")
-	UWidgetComponent* PacmanHUDComponent;
+	TObjectPtr<UWidgetComponent> PacmanHUDComponent;
 	
 public:	
 	UPROPERTY()
 	TWeakObjectPtr<UInputHandlerComponent> InputHandlerComponent = nullptr;
-	
 	FOnQuit OnQuitDelegate;
-	
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Arcade")
-	APacmanGame* PacmanGame = nullptr;
+	TObjectPtr<APacmanGame> PacmanGame = nullptr;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnConstruction(const FTransform& Transform) override;
-	UFUNCTION()
-	void FocusMachine();
 public:
 	AArcadeMachine();
-	virtual void Interact_Implementation(ACharacter* Character) override;
-	
+	virtual TSoftObjectPtr<UInteractionDefinition> GetInteractionDefinition_Implementation() override;
+	virtual void OnInteractionExecuted_Implementation() override;
 	UFUNCTION()
 	void SetupArcade(UInputHandlerComponent* inInputHandlerComponent);
 	

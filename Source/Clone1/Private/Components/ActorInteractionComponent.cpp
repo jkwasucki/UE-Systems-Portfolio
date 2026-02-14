@@ -55,7 +55,7 @@ void UActorInteractionComponent::OnBeginOverlap(   UPrimitiveComponent* Overlapp
 				AMainCharacter* MC = PC->GetMainCharacter();
 				if (MC)
 				{
-					MC->GetInteractionComponent()->NearbyInteractables.Add(Parent);
+					MC->GetInteractionComponent()->AddInteractable(Parent.Get());
 				}
 			}
 		}
@@ -72,7 +72,7 @@ void UActorInteractionComponent::OnEndOverlap(UPrimitiveComponent* OverlappedCom
 			AMainCharacter* MC = PC->GetMainCharacter();
 			if (MC)
 			{
-				MC->GetInteractionComponent()->NearbyInteractables.Remove(Parent);
+				MC->GetInteractionComponent()->RemoveInteractable(Parent.Get());
 			}
 		}
 	}

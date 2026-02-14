@@ -2,8 +2,6 @@
 
 
 #include "Actors/Item.h"
-
-#include "Main/PlayerController/MainPlayerController.h"
 #include "Main/PlayerState/MainPlayerState.h"
 #include "GameFramework/Character.h"
 #include "Engine/Engine.h"
@@ -41,14 +39,12 @@ void AItem::BeginPlay()
 	
 	if (!InteractableComponent) return;
 	InteractableComponent->SetupComponent(this,Collider);
-	InteractableComponent->OnInteractDelegate.AddDynamic(this, &AItem::AItem::OnInteract);
 	InteractableComponent->OnHighlightDelegate.AddDynamic(this, &AItem::AItem::OnHighlight);
 	
 }
-
-void AItem::OnInteract(ACharacter* Char)
+TSoftObjectPtr<UInteractionDefinition> AItem::GetInteractionDefinition_Implementation()
 {
-	PickupItem(Char);
+	return InteractableComponent->InteractionDefinition;
 }
 
 void AItem::OnHighlight(bool bState)
@@ -63,20 +59,8 @@ void AItem::InitItem(const FItemStack& InStack)
 	ItemStack.Amount = InStack.Amount;
 }
 
-void AItem::PickupItem(ACharacter* Character)
-{
-	if (AMainPlayerState* PS = Cast<AMainPlayerState>(Character->GetPlayerState()))
-	{
-		if (PS->InventoryComponent)
-		{
-			if (PS->InventoryComponent->AddItem(ItemStack.ItemID, ItemStack.Amount))
-			{
-				Destroy();
-			}
-		
-		}
-	}
-}
+
+
 void AItem::EnablePhysics()
 {
 	if (!Mesh)return;
@@ -94,20 +78,12 @@ void AItem::EnablePhysics()
 		false
 	);
 }
-
 void AItem::DisablePhysics()
 {
 	Mesh->SetSimulatePhysics(false);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 }
-
-void AItem::Interact_Implementation(ACharacter* Character)
-{
-	InteractableComponent->bIsInteractedWith = true;
-	InteractableComponent->OnInteractDelegate.Broadcast(Character);
-}
-
 void AItem::Highlight_Implementation(bool bState)
 {
 	InteractableComponent->OnHighlightDelegate.Broadcast(bState);
@@ -116,15 +92,6 @@ void AItem::Highlight_Implementation(bool bState)
 bool AItem::IsInteractedWith_Implementation()
 {
 	return InteractableComponent->bIsInteractedWith;
-}
-FText AItem::GetActionText_Implementation() 
-{
-	return InteractableComponent->ActionText;
-}
-
-FText AItem::GetActionKeyString_Implementation() 
-{
-	return InteractableComponent->ActionKey;
 }
 
 

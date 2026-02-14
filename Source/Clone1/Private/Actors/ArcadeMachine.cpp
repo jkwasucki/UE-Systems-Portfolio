@@ -29,6 +29,16 @@ AArcadeMachine::AArcadeMachine()
 
 }
 
+TSoftObjectPtr<UInteractionDefinition> AArcadeMachine::GetInteractionDefinition_Implementation()
+{
+	return InteractionComponent->InteractionDefinition;
+}
+
+void AArcadeMachine::OnInteractionExecuted_Implementation()
+{
+	InteractionComponent->bIsInteractedWith = true;
+}
+
 void AArcadeMachine::BeginPlay()
 {
 	Super::BeginPlay();
@@ -57,15 +67,7 @@ void AArcadeMachine::OnConstruction(const FTransform& Transform)
 	}
 }
 
-void AArcadeMachine::FocusMachine()
-{
-	if (!PacmanGame) return;
-	if (AMainPlayerController* PC =
-		Cast<AMainPlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		PC->StartPacmanGame(this);
-	}
-}
+
 
 // Called every frame
 void AArcadeMachine::Tick(float DeltaTime)
@@ -94,10 +96,10 @@ void AArcadeMachine::SetupArcade(UInputHandlerComponent* inInputHandlerComponent
 	}
 }
 
-void AArcadeMachine::Interact_Implementation(ACharacter* Character)
-{
-	FocusMachine();
-}
+// void AArcadeMachine::Interact_Implementation(ACharacter* Character)
+// {
+// 	FocusMachine();
+// }
 
 void AArcadeMachine::Quit()
 {
