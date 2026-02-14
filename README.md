@@ -2,10 +2,9 @@
 ## Table of Contents
 - [Character & Combat Core](#character--combat-core-unreal-engine-c)
 - [Ability System](#ability-system-unreal-engine-c)
-- [Pacman](#pacman-unreal-engine-c)
 - [Inventory & Equipment System](#inventory--equipment-system-unreal-engine-c)
 - [Interaction System](#interaction-system-unreal-engine-c)
-
+- [Pacman](#pacman-unreal-engine-c)
 
 # Gameplay Systems
 
