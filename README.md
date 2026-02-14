@@ -1,3 +1,12 @@
+
+## Table of Contents
+- [Character & Combat Core](#character--combat-core-unreal-engine-c)
+- [Ability System](#ability-system-unreal-engine-c)
+- [Pacman](#pacman-unreal-engine-c)
+- [Inventory & Equipment System](#inventory--equipment-system-unreal-engine-c)
+- [Interaction System](#interaction-system-unreal-engine-c)
+
+
 # Gameplay Systems
 
 ---
@@ -375,4 +384,128 @@ Gameplay logic lives entirely in **Actor Components**, while the UI layer acts a
 
 ---
 
+# Interaction System (Unreal Engine C++)
+
+A modular, data-driven interaction framework built in Unreal Engine C++, designed with clear ownership, reusable actions, and event-driven communication between player, world objects, and UI.
+
+The system allows world actors to expose interaction definitions, while the player executes interactions through a dedicated Interactor Component.
+
+---
+
+## Core Design Principles
+
+- **Player owns the interaction logic** through an `InteractorComponent`.
+- **World actors only declare what interactions are available**, not how they are executed.
+- Interactions are **data-driven** using `InteractionDefinition` assets.
+- Interaction behavior is implemented as **reusable action classes**.
+- Communication is handled through **delegates and interfaces**, not direct references.
+
+---
+
+## Architecture Overview
+
+### Interactor Component (Player Side)
+
+`InteractorComponent` is responsible for:
+
+- Detecting entities and interactables under the cursor.
+- Managing nearby interactable actors.
+- Selecting the best interaction target.
+- Executing interactions through interaction definitions.
+- Broadcasting focus and interaction events to UI.
+
+Key responsibilities:
+
+- Cursor tracing and entity detection.
+- Highlighting interactable actors.
+- Managing interaction instances.
+- Triggering interaction actions.
+
+---
+
+### Interaction Definitions (Data Assets)
+
+Each interactable exposes one or more **InteractionDefinition** assets containing:
+
+- Input action (which key triggers it).
+- Prompt text for UI.
+- Interaction duration.
+- List of interaction actions to execute.
+
+This allows designers to:
+
+- Configure interactions without code.
+- Reuse interaction logic across different actors.
+
+---
+
+### Interaction Instances
+
+When an interaction is triggered:
+
+1. The `InteractorComponent` creates an `InteractionInstance`.
+2. The instance stores:
+   - Instigator (player).
+   - Target actor.
+   - Interaction definition.
+3. The instance spawns and executes all actions defined in the interaction.
+
+This creates a **self-contained execution context** for each interaction.
+
+---
+
+### Interaction Actions (Behavior Layer)
+
+Interaction behavior is implemented as subclasses of `UInteractionAction`.
+
+Examples:
+
+#### Pickup Item Action
+- Adds item to the player’s inventory.
+- Destroys the world item if successful.
+
+#### Start Arcade Game Action
+- Triggers the arcade machine interaction.
+- Starts the Pacman minigame through the player controller.
+
+Because actions are independent classes:
+
+- New interaction types can be added without modifying the core system.
+- The same action can be reused across multiple interactables.
+
+---
+
+## Interaction Flow
+
+1. Player moves cursor over an actor.
+2. `InteractorComponent` detects an interactable.
+3. Interaction prompt is broadcast to UI.
+4. Player presses the interaction input.
+5. An `InteractionInstance` is created.
+6. All actions defined in the interaction are executed.
+7. World state updates (item picked up, arcade started, etc.).
+
+---
+
+## Key Design Highlights
+
+- **Data-driven interactions** using Primary Data Assets.
+- **Reusable action classes** instead of hard-coded logic.
+- **Player-owned interaction pipeline** with clear responsibility.
+- **Interface-based communication** with world actors.
+- **Event-driven UI prompts and highlighting.**
+
+---
+
+## What I Learned
+
+- How to design a **generic interaction pipeline** instead of one-off interaction code.
+- How to structure interactions so that:
+  - the player owns execution logic,
+  - world actors remain lightweight and decoupled.
+- How to build reusable interaction systems that can support:
+  - pickups
+  - world objects
+  - minigames
+  - quest triggers
 
