@@ -58,7 +58,8 @@ public:
 	UHUDComponent* GetHUDComponent() const;
 	UFUNCTION()
 	AMainCharacter* GetMainCharacter() const;
-	
+	UFUNCTION()
+	void RequestSaveGame();
 };
 
 

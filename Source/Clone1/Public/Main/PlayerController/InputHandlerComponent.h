@@ -12,7 +12,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRightClick);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpaceDown);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTabDown);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputSaveGame);
 
 class AMainPlayerController;
 UCLASS(
@@ -37,6 +37,8 @@ protected:
 	void OnTabDown();
 	UFUNCTION()
 	void OnSpaceDown();
+	UFUNCTION()
+	void OnSaveGame();
 	UFUNCTION()
 	void ActivatePacmanContext();
 	UFUNCTION()
@@ -65,12 +67,15 @@ public:
 	UInputAction* IA_Space;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input|Actions")
 	UInputAction* IA_Tab;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input|Actions")
+	UInputAction* IA_SaveGame;
 	
 	
 	// Delegates
 	FOnRightClick OnRightClickDelegate;
 	FOnSpaceDown OnSpaceDownDelegate;
 	FOnTabDown OnTabDownDelegate; 
+	FOnInputSaveGame OnInputSaveGameDelegate;
 	
 	
 };

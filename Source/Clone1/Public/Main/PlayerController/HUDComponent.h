@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InteractionDefinition.h"
+#include "InteractionSystem/Definitions/InteractionDefinition.h"
 #include "OtherHUD/GameplayDebug/ScreenGameplayDebugWidget.h"
 #include "OtherHUD/InteractionTooltipWidget.h"
 #include "Inventory/HUD/InventoryScreenWidget.h"

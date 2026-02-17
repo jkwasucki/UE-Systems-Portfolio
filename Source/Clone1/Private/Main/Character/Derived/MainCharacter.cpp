@@ -10,6 +10,7 @@
 #include "Main/Character/AttributesComponent.h"
 #include "Main/PlayerController/MainPlayerController.h"
 #include "EnhancedInputComponent.h"
+#include "SaveSystem/GameSaveSubsystem.h"
 #include "Structs/FAnimationTags.h"
 #include "Main/Character/InteractorComponent.h"
 #include "WeaponSystem/WeaponSystemComponent.h"
@@ -100,7 +101,16 @@ void AMainCharacter::BeginPlay()
 	InteractionComponent->Init(this);
 	
 	
-	WeaponMesh->SetupAttachment(GetRootComponent());;
+	WeaponMesh->AttachToComponent(
+		GetRootComponent(),
+		FAttachmentTransformRules::KeepRelativeTransform
+	);
+	
+	// APPLY LOAD GAME
+	if (UGameSaveSubsystem* GameSaveSubsystem = GetGameInstance()->GetSubsystem<UGameSaveSubsystem>())
+	{
+		GameSaveSubsystem->ApplyPendingLoad(this);
+	}
 }
 
 void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

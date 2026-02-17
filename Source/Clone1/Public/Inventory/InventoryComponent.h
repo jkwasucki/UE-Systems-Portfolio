@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Interfaces/SavableInterface.h"
 #include "Structs/FItemStack.h"
 #include "Structs/FItemData.h"
 #include "InventoryComponent.generated.h"  
@@ -23,7 +24,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeightChange, int32, CurrentWeig
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnItemConsumed,AActor*, Owner, FCharacterEffect&, Effect, FGuid, SourceInstanceID, FName, ItemID);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class CLONE1_API UInventoryComponent : public UActorComponent
+class CLONE1_API UInventoryComponent : public UActorComponent, public ISavableInterface
 {
 	GENERATED_BODY()
 public:	
@@ -101,6 +102,10 @@ public:
 
 	void SetEquipmentComponentLink(UEquipmentComponent* inEquipmentComponent);
 	
+	// SAVABLE INTERFACE
+	virtual FName GetSaveID_Implementation() const override;
+	virtual void DeserializeFromBinary_Implementation(const TArray<uint8>& InData) override;
+	virtual void SerializeToBinary_Implementation(TArray<uint8>& OutData) const override;
 	
 private:
 	bool HasSpace()

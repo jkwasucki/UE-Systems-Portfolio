@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InteractionDefinition.h"
+#include "InteractionSystem/Definitions/InteractionDefinition.h"
 #include "UObject/Interface.h"
 #include "InteractableInterface.generated.h"
 

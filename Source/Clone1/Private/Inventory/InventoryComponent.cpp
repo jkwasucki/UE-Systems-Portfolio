@@ -8,6 +8,7 @@
 #include "Main/PlayerController/MainPlayerController.h"
 #include "Algo/Find.h"
 #include "Main/PlayerState/MainPlayerState.h"
+#include "Structs/FInventorySaveData.h"
 
 
 UInventoryComponent::UInventoryComponent()
@@ -341,4 +342,55 @@ void UInventoryComponent::ConsumeItem(int32 Index)
 
 	UpdateWeight();
 	OnInventoryChanged.Broadcast();
+}
+
+
+FName UInventoryComponent::GetSaveID_Implementation() const
+{
+	return "Inventory";
+}
+
+void UInventoryComponent::DeserializeFromBinary_Implementation(const TArray<uint8>& InData)
+{
+	if (InData.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Inventory load failed: empty data"));
+		return;
+	}
+	
+	FInventorySaveData InventoryData;
+	FMemoryReader Reader(InData);
+	Reader << InventoryData;
+	
+
+	Items.Empty();
+	
+	for (const FInventoryItemSaveData& Item : InventoryData.Items)
+	{
+		FItemStack ItemStack;
+		ItemStack.ItemID = Item.ItemID;
+		ItemStack.Amount = Item.Quantity;
+		Items.Add(ItemStack);
+	}
+	
+	OnInventoryChanged.Broadcast();
+}
+
+void UInventoryComponent::SerializeToBinary_Implementation(TArray<uint8>& OutData) const
+{
+	OutData.Reset();
+	
+	FInventorySaveData InventoryData;
+	
+	for (const FItemStack& Item : Items)
+	{
+		FInventoryItemSaveData ItemData;
+		ItemData.ItemID = Item.ItemID;
+		ItemData.Quantity = Item.Amount;
+		
+		InventoryData.Items.Add(ItemData);
+	}
+	
+	FMemoryWriter Writer(OutData);
+	Writer << InventoryData;
 }

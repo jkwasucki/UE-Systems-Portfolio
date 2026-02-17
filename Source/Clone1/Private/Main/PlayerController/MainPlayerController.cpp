@@ -4,6 +4,7 @@
 #include "Main/PlayerController/MainPlayerController.h"
 #include "Actors/ArcadeMachine.h"
 #include "EnhancedInputComponent.h"
+#include "SaveSystem/GameSaveSubsystem.h"
 #include "Main/Character/Derived/MainCharacter.h"
 #include "Main/PlayerState/MainPlayerState.h"
 
@@ -23,6 +24,15 @@ void AMainPlayerController::BeginPlay()
 	//Capture drop requests from InventoryComponent (PlayerState)
 	GetPlayerState<AMainPlayerState>()->InventoryComponent->OnRequestDropDelegate.AddDynamic(this, &AMainPlayerController::SpawnItemActor);
 	HUDComponent->Init(this);
+	
+	
+	InputHandlerComponent->OnInputSaveGameDelegate.AddDynamic(this, &AMainPlayerController::RequestSaveGame);
+	
+	// INITIAL GAME LOAD
+	if (UGameSaveSubsystem* GameSaveSubsystem = GetGameInstance()->GetSubsystem<UGameSaveSubsystem>())
+	{
+		GameSaveSubsystem->LoadGame(TEXT("DefaultSlot"));
+	}
 }
 
 void AMainPlayerController::SetupInputComponent()
@@ -118,6 +128,15 @@ AMainCharacter* AMainPlayerController::GetMainCharacter() const
 	AMainCharacter* MainCharacter = Cast<AMainCharacter>(GetPawn());
 	if (!MainCharacter) return nullptr;
 	return MainCharacter;
+}
+
+void AMainPlayerController::RequestSaveGame()
+{
+	
+	UGameSaveSubsystem* GameSaveSubsystem = GetGameInstance()->GetSubsystem<UGameSaveSubsystem>();
+	if (!GameSaveSubsystem) return;
+	
+	GameSaveSubsystem->SaveGame(TEXT("DefaultSlot"));
 }
 
 FVector AMainPlayerController::GetCharacterLocation()

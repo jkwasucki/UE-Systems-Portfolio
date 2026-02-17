@@ -81,6 +81,9 @@ void UInputHandlerComponent::SetupInputActions(UEnhancedInputComponent* inEnhanc
 		if (IA_Tab)
 			EnhancedInputComponent->BindAction(IA_Tab,ETriggerEvent::Started,this,&UInputHandlerComponent::OnTabDown);
 		
+		if (IA_SaveGame)
+			EnhancedInputComponent->BindAction(IA_SaveGame,ETriggerEvent::Started,this,&UInputHandlerComponent::OnSaveGame);
+		
 	}
 }
 
@@ -114,6 +117,11 @@ void UInputHandlerComponent::OnTabDown()
 void UInputHandlerComponent::OnSpaceDown()
 {
 	OnSpaceDownDelegate.Broadcast();
+}
+
+void UInputHandlerComponent::OnSaveGame()
+{
+	OnInputSaveGameDelegate.Broadcast();
 }
 
 

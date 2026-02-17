@@ -2,8 +2,8 @@
 
 #pragma once
 #include "CoreMinimal.h"
-#include "InteractionDefinition.h"
-#include "InteractionInstance.h"
+#include "InteractionSystem/Definitions/InteractionDefinition.h"
+#include "InteractionSystem/Instances/InteractionInstance.h"
 #include "Components/ActorComponent.h"
 #include "InteractorComponent.generated.h"
 
