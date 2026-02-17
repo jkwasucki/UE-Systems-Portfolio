@@ -1,146 +1,21 @@
 
-## Table of Contents
-- [Character & Combat Core](#character--combat-core-unreal-engine-c)
-- [Ability System](#ability-system-unreal-engine-c)
-- [Inventory & Equipment System](#inventory--equipment-system-unreal-engine-c)
-- [Interaction System](#interaction-system-unreal-engine-c)
-- [Pacman](#pacman-unreal-engine-c)
 
 # Gameplay Systems
 
----
 
----
-
----
-
-## Character & Combat Core (Unreal Engine C++)
-
-The project uses a modular, component-driven character architecture where all gameplay behavior is handled through dedicated systems instead of monolithic character classes.
-
-
-<p align="center">
-  <img src="assets/Fight1.gif" width="30%" />
-  <img src="assets/Fight2.gif" width="30%" />
-</p>
-
-
-### Core Character Structure
-
-Each character is built around a `BaseCharacter` class that owns independent gameplay components:
-
-- **ResourceComponent**  
-  Handles health and energy with event-driven updates.
-
-- **AttributesComponent**  
-  Stores base and bonus attributes (attack, armor, speed, etc.).  
-  Supports modifiers from equipment and effects.
-
-- **EffectsComponent**  
-  Manages active gameplay effects:
-  - instant effects
-  - duration-based effects
-  - overtime effects
-  - stackable and non-stackable logic
-  - automatic revert on failure or expiration
-
-- **AbilitySystemComponent**  
-  Responsible for:
-  - ability validation (energy, cooldown, targeting)
-  - cast state handling
-  - effect execution
-  - cooldown tracking
-
-- **CharacterMoverComponent**  
-  Handles movement overrides and speed modifiers.
-
-- **CharacterAnimationComponent**  
-  Plays animations driven by gameplay events.
-
-- **CharacterVFXComponent**  
-  Spawns and manages visual effects tied to abilities and status effects.
-
----
-
-### Event-Driven Gameplay Flow
-
-Systems communicate through delegates instead of direct coupling.
-
-**Example ability flow:**
-
-1. Input or AI requests ability use.
-2. AbilitySystem validates:
-   - energy cost
-   - cooldown
-   - targeting
-3. Ability enters cast state.
-4. On cast completion:
-   - effects are applied to targets
-   - cooldown is started
-   - animations and VFX are triggered
-5. Effects modify:
-   - resources
-   - attributes
-6. Effects expire or are aborted automatically.
-
----
-
-### Shared Player & Enemy Logic
-
-Both player and enemy characters use the same systems:
-
-- `AbilitySystemComponent`
-- `EffectsComponent`
-- `AttributesComponent`
-- `ResourceComponent`
-
-The enemy uses a simple `EnemyAIComponent` that:
-
-- detects targets using a trigger sphere
-- switches between idle and attacking states
-- uses the same ability pipeline as the player
-
-This ensures:
-
-- no duplicated combat logic
-- consistent behavior between AI and player
-- easier extension for new enemy types
-
----
-
-### Character States
-
-Characters operate on a simple gameplay state model:
-
-- Idle
-- Casting
-- Attacking
-- Dead
-
-State changes are driven by:
-
-- ability casting
-- movement logic
-- death/resurrection events
-
-### What I Learned
-
-- **Component-driven architecture**  
-  Splitting character logic into independent components (abilities, effects, attributes, resources, movement, animation) makes systems easier to extend and reuse across player and AI characters.
-
-- **Shared player and AI pipelines**  
-  Both player and enemy characters use the same ability and effect systems, preventing duplicated combat logic.
-
-- **Debug-first development**  
-  Building a structured gameplay debug HUD helped quickly verify state transitions, effect stacking, resource changes, and ability execution during development.
-
+## Table of Contents
+- [Ability System](#ability-system-unreal-engine-c)
+- [Character & Combat Core](#character--combat-core-unreal-engine-c)
+- [Inventory & Equipment System](#inventory--equipment-system-unreal-engine-c)
+- [Save & Persistance System](#save-system--persistance-unreal-engine-c)
+- [Interaction System](#interaction-system-unreal-engine-c)
+- [Pacman](#pacman-unreal-engine-c)
 
 ---
 
 ---
 
 ---
-
 
 # Ability System (Unreal Engine C++)
 
@@ -280,39 +155,301 @@ This allows quick verification of gameplay state during:
 
 ---
 
+# Save System & Persistance (Unreal Engine C++)
 
+A modular, component-driven save system built in Unreal Engine, designed around clear ownership, binary serialization, and subsystem-based orchestration.
 
-# Pacman (Unreal Engine C++)
+Instead of relying on a monolithic save structure, each gameplay component owns its own persistence logic, while a central subsystem handles disk I/O and state application.
 
-
-| | | |
-|:-:|:-:|:-:|
-| <img src="https://github.com/user-attachments/assets/355a6af1-1c72-4024-8885-eec857f2d564" width="300" /> | <img src="https://github.com/user-attachments/assets/12325bf2-9894-4c83-9d65-fe7178520231" width="300" /> | <img src="https://github.com/user-attachments/assets/f9cca475-aab5-4280-9146-e6084e7d3c48" width="300" /> |
-
-
-
-
-*Arcade machine integration (left), in-game HUD and board state (center/right).*
-
-A modular **Pacman gameplay system** built in **Unreal Engine (C++)**, designed with a  **clear ownership**, **data-driven rules**, and **event-based communication**.
-
----
+* * *
 
 ## Overview
 
-- A **central gameplay authority** owns global state (**score**, **lives**, **ghost modes**, **game flow**), while actors react through **delegates** instead of direct dependencies.
-- Player and AI entities share a **common base**, with **grid-based movement** implemented as a reusable **gameplay component**.
-- Ghost behavior follows classic Pacman rules (*Scatter / Chase / Frightened*), implemented via **timed state transitions** and **grid-based targeting** (not per-frame scripting).
-- Level layout and collectibles are **data-driven**, separating **board definition** from **gameplay logic**.
-- UI and world interaction are driven entirely by **gameplay events**, keeping **presentation** independent from core systems.
+Traditional save systems often store all gameplay data inside a single, growing save struct.  
+This quickly becomes difficult to maintain as new systems are added.
 
-## What I Learned
+This project uses a **component-driven persistence model**:
 
-- Designing gameplay systems with **clear responsibility boundaries** between **game state**, **actors**, and **components**.
-- Implementing classic AI behavior in a maintainable way using **state machines**, **timers**, and **grid-based reasoning**.
-- Choosing **delegates over direct references** to keep gameplay systems **flexible** and more **testable**.
-- Understanding how Unreal’s gameplay lifecycle (**BeginPlay**, timers, restart/quit flow) affects system design.
-- Favoring **clarity and correctness** in gameplay code over over-engineering.
+- Each gameplay component is responsible for saving and loading its own data.
+- The save system only coordinates discovery and storage.
+- No direct dependencies exist between gameplay systems.
+
+This keeps the architecture modular, scalable, and production-friendly.
+
+* * *
+
+### Responsibility Breakdown
+
+- **Components**
+  - Own their save data.
+  - Serialize and deserialize themselves.
+
+- **ISavableInterface**
+  - Defines a common persistence contract.
+
+- **GameSaveSubsystem**
+  - Handles save/load orchestration.
+  - Performs disk I/O.
+  - Applies loaded state.
+
+- **SaveGame Object**
+  - Stores binary data for all components.
+
+* * *
+
+## Core Systems
+
+### Savable Interface
+
+All saveable components implement: **ISavableInterface**
+
+**Required Functions:**
+
+  - FName GetSaveID();
+  - void SerializeToBinary(TArray<uint8>& OutData);
+  - void DeserializeFromBinary(const TArray<uint8>& InData);
+
+**Purpose:**
+
+  - Standard save contract.
+
+  - No hard references between systems.
+
+  - Plug-and-play save support.
+
+### Save Subsystem
+
+Acts as the single authority for persistence.
+
+**Responsibilities:**
+
+  - Saving to disk
+
+  - Loading from disk
+
+  - Storing pending load data
+
+  - Applying saved data to components
+
+
+**Save Data Structure:**
+```
+USaveGameObject
+    FGameSaveData
+        FPlayerSaveData
+            TMap<FName, FComponentBinaryData>
+```
+
+**Save Flow**
+
+```
+PlayerController requests save
+        ↓
+SaveSubsystem::SaveGame()
+        ↓
+Find savable components on:
+    - Pawn
+    - PlayerState
+        ↓
+For each component:
+    GetSaveID()
+    SerializeToBinary()
+    Store in map
+        ↓
+Write to disk
+```
+
+**Load Flow (Two-Phase System)**
+To avoid initialization order issues, loading is split into two phases.
+
+Phase 1 — Disk Load
+```
+LoadGame()
+    → read save file
+    → store PendingLoadData
+    → set bIsLoadPending = true
+```
+Phase 2 — State Application
+```
+Character BeginPlay
+    → ApplyPendingLoad()
+    → components restore themselves
+```
+
+This ensures all gameplay systems are fully initialized before state is applied.
+
+* * *
+
+### Key Design Decisions
+Component-Driven Persistence
+
+  - New systems without modifying core save structs.
+
+  - Independent serialization logic per component.
+
+  - Reduced coupling between gameplay features.
+
+### Current Feature Set
+
+**Core Features**
+
+  - Component-based persistence
+
+  - Interface-driven save contract
+
+  - Binary serialization per component
+
+  - Subsystem-controlled disk I/O
+
+  - Two-phase load pipeline
+
+  - Pawn + PlayerState coverage
+
+**Qualities**
+
+  - Decoupled gameplay systems
+
+  - Clear data ownership
+
+  - Easily extensible
+
+  - Production-style structure
+
+Future systems can be added without redesign.
+
+### What I Learned
+
+  - How to use Unreal subsystems as global gameplay services.
+
+  - How to avoid initialization order bugs using a two-phase load pipeline.
+
+  - How to use binary serialization for flexible, decoupled save data.
+
+---
+
+---
+
+---
+
+## Character & Combat Core (Unreal Engine C++)
+
+The project uses a modular, component-driven character architecture where all gameplay behavior is handled through dedicated systems instead of monolithic character classes.
+
+
+<p align="center">
+  <img src="assets/Fight1.gif" width="30%" />
+  <img src="assets/Fight2.gif" width="30%" />
+</p>
+
+
+### Core Character Structure
+
+Each character is built around a `BaseCharacter` class that owns independent gameplay components:
+
+- **ResourceComponent**  
+  Handles health and energy with event-driven updates.
+
+- **AttributesComponent**  
+  Stores base and bonus attributes (attack, armor, speed, etc.).  
+  Supports modifiers from equipment and effects.
+
+- **EffectsComponent**  
+  Manages active gameplay effects:
+  - instant effects
+  - duration-based effects
+  - overtime effects
+  - stackable and non-stackable logic
+  - automatic revert on failure or expiration
+
+- **AbilitySystemComponent**  
+  Responsible for:
+  - ability validation (energy, cooldown, targeting)
+  - cast state handling
+  - effect execution
+  - cooldown tracking
+
+- **CharacterMoverComponent**  
+  Handles movement overrides and speed modifiers.
+
+- **CharacterAnimationComponent**  
+  Plays animations driven by gameplay events.
+
+- **CharacterVFXComponent**  
+  Spawns and manages visual effects tied to abilities and status effects.
+
+---
+
+### Event-Driven Gameplay Flow
+
+Systems communicate through delegates instead of direct coupling.
+
+**Example ability flow:**
+
+1. Input or AI requests ability use.
+2. AbilitySystem validates:
+   - energy cost
+   - cooldown
+   - targeting
+3. Ability enters cast state.
+4. On cast completion:
+   - effects are applied to targets
+   - cooldown is started
+   - animations and VFX are triggered
+5. Effects modify:
+   - resources
+   - attributes
+6. Effects expire or are aborted automatically.
+
+---
+
+### Shared Player & Enemy Logic
+
+Both player and enemy characters use the same systems:
+
+- `AbilitySystemComponent`
+- `EffectsComponent`
+- `AttributesComponent`
+- `ResourceComponent`
+
+The enemy uses a simple `EnemyAIComponent` that:
+
+- detects targets using a trigger sphere
+- switches between idle and attacking states
+- uses the same ability pipeline as the player
+
+This ensures:
+
+- no duplicated combat logic
+- consistent behavior between AI and player
+- easier extension for new enemy types
+
+---
+
+### Character States
+
+Characters operate on a simple gameplay state model:
+
+- Idle
+- Casting
+- Attacking
+- Dead
+
+State changes are driven by:
+
+- ability casting
+- movement logic
+- death/resurrection events
+
+### What I Learned
+
+- **Component-driven architecture**  
+  Splitting character logic into independent components (abilities, effects, attributes, resources, movement, animation) makes systems easier to extend and reuse across player and AI characters.
+
+- **Shared player and AI pipelines**  
+  Both player and enemy characters use the same ability and effect systems, preventing duplicated combat logic.
+
+- **Debug-first development**  
+  Building a structured gameplay debug HUD helped quickly verify state transitions, effect stacking, resource changes, and ability execution during development.
 
 
 ---
@@ -508,3 +645,47 @@ Because actions are independent classes:
   - minigames
   - quest triggers
 
+---
+
+---
+
+---
+
+# Pacman (Unreal Engine C++)
+
+
+| | | |
+|:-:|:-:|:-:|
+| <img src="https://github.com/user-attachments/assets/355a6af1-1c72-4024-8885-eec857f2d564" width="300" /> | <img src="https://github.com/user-attachments/assets/12325bf2-9894-4c83-9d65-fe7178520231" width="300" /> | <img src="https://github.com/user-attachments/assets/f9cca475-aab5-4280-9146-e6084e7d3c48" width="300" /> |
+
+
+
+
+*Arcade machine integration (left), in-game HUD and board state (center/right).*
+
+A modular **Pacman gameplay system** built in **Unreal Engine (C++)**, designed with a  **clear ownership**, **data-driven rules**, and **event-based communication**.
+
+---
+
+## Overview
+
+- A **central gameplay authority** owns global state (**score**, **lives**, **ghost modes**, **game flow**), while actors react through **delegates** instead of direct dependencies.
+- Player and AI entities share a **common base**, with **grid-based movement** implemented as a reusable **gameplay component**.
+- Ghost behavior follows classic Pacman rules (*Scatter / Chase / Frightened*), implemented via **timed state transitions** and **grid-based targeting** (not per-frame scripting).
+- Level layout and collectibles are **data-driven**, separating **board definition** from **gameplay logic**.
+- UI and world interaction are driven entirely by **gameplay events**, keeping **presentation** independent from core systems.
+
+## What I Learned
+
+- Designing gameplay systems with **clear responsibility boundaries** between **game state**, **actors**, and **components**.
+- Implementing classic AI behavior in a maintainable way using **state machines**, **timers**, and **grid-based reasoning**.
+- Choosing **delegates over direct references** to keep gameplay systems **flexible** and more **testable**.
+- Understanding how Unreal’s gameplay lifecycle (**BeginPlay**, timers, restart/quit flow) affects system design.
+- Favoring **clarity and correctness** in gameplay code over over-engineering.
+
+
+---
+
+---
+
+---
