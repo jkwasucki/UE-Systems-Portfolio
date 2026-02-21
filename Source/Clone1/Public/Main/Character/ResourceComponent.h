@@ -33,20 +33,23 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	float CurrentHealth = 50;
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_Health)
+	float CurrentHealth = 100;
+	UPROPERTY(ReplicatedUsing=OnRep_Energy)
 	float CurrentEnergy = 100;
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION()
-	void UpdateResource(ECharacterResource Resource, float Delta);
+	void OnRep_Health(float OldHealth);
 	UFUNCTION()
-	float UpdateHealth(float Delta);
+	void OnRep_Energy(float OldEnergy);
+	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+public:	
 	UFUNCTION()
-	void UpdateEnergy(float Delta);
+	float UpdateHealth(float delta);
+	UFUNCTION()
+	void UpdateEnergy(float delta);
 	UFUNCTION()
 	float GetHealth() const;
 	UFUNCTION()

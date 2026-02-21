@@ -73,11 +73,11 @@ public:
 	UFUNCTION()
 	void Toggle();
 	UFUNCTION()
-	void DisplayConsumableEffectWidget(UActiveEffectInstance* Effect, FName ItemID);
+	void DisplayConsumableEffectWidget(FCharacterEffect Effect, FName ItemID);
 	UFUNCTION()
 	void GenerateConsumableEffectWidget(FGuid EffecInstanceID,float Duration, FName ItemID);
 	UFUNCTION()
-	void RemoveConsumableEffectWidget(UActiveEffectInstance* Effect);
+	void RemoveConsumableEffectWidget(FCharacterEffect Effect, FGuid EffectInstanceID);
 	
 	UFUNCTION()
 	void OnEffectExtended(UActiveEffectInstance* Effect);

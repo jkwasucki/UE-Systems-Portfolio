@@ -2,61 +2,41 @@
 
 
 #include "Main/Character/ResourceComponent.h"
+#include "Net/UnrealNetwork.h"
 
-#include "Types/CharacterTypes.h"
 
-// Sets default values for this component's properties
 UResourceComponent::UResourceComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	SetIsReplicatedByDefault(true);
 }
 
-
-// Called when the game starts
 void UResourceComponent::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	// ...
+void UResourceComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
+	DOREPLIFETIME(UResourceComponent, CurrentHealth);
+	DOREPLIFETIME(UResourceComponent, CurrentEnergy);
 }
 
-
-// Called every frame
-void UResourceComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+float UResourceComponent::UpdateHealth(float delta)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
-void UResourceComponent::UpdateResource(ECharacterResource Resource, float Delta)
-{
-	if (Resource == ECharacterResource::None)
-		return;
-	
-	if (Resource ==  ECharacterResource::Health)
-		UpdateHealth(Delta);
-	if (Resource ==  ECharacterResource::Energy)
-		UpdateEnergy(Delta);
-}
-
-float UResourceComponent::UpdateHealth(float Delta)
-{
-	CurrentHealth += Delta;
+	CurrentHealth += delta;
 	CurrentHealth = FMath::Clamp(CurrentHealth, 0.f, 100.f);
+	
 	OnHealthChangedDelegate.Broadcast(CurrentHealth);
 	SnapshotOnHealthChangedDelegate.Broadcast();
 	
 	// Broadcast delta
-	OnHealthChangedByDeltaDelegate.Broadcast(Delta);
+	OnHealthChangedByDeltaDelegate.Broadcast(delta);
 	
 	return CurrentHealth;
 }
-
 void UResourceComponent::UpdateEnergy(float Delta)
 {
 	CurrentEnergy += Delta;
@@ -64,6 +44,23 @@ void UResourceComponent::UpdateEnergy(float Delta)
 	OnEnergyChangedDelegate.Broadcast(CurrentEnergy);
 	SnapshotOnEnergyChangedDelegate.Broadcast();
 }
+
+void UResourceComponent::OnRep_Health(float OldHealth)
+{
+	float Delta = CurrentHealth - OldHealth;
+	
+	OnHealthChangedDelegate.Broadcast(CurrentHealth);
+	SnapshotOnHealthChangedDelegate.Broadcast();
+
+	OnHealthChangedByDeltaDelegate.Broadcast(Delta);
+}
+
+void UResourceComponent::OnRep_Energy(float OldEnergy)
+{
+	OnEnergyChangedDelegate.Broadcast(CurrentEnergy);
+	SnapshotOnEnergyChangedDelegate.Broadcast();
+}
+
 
 float UResourceComponent::GetHealth() const
 {

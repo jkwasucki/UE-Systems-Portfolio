@@ -24,7 +24,7 @@ protected:
 public:	
 
 	UFUNCTION()
-	void PlayVFX(FVFXData& VFX, const FGuid& Identifier);
+	void PlayVFX(FVFXData VFX, const FGuid Identifier);
 	
 	UFUNCTION()
 	void StopVFX(const FGuid& Identifier);

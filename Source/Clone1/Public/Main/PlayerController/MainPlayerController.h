@@ -19,10 +19,7 @@ class CLONE1_API AMainPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-
-	
-	
-	/// TODO: FIX ITEM DATA TABLES BEING IN SO MANY CLASSES (MOVE TO INVENTORY ONLY - QUERY FROM THERE)
+	/// TODO: FIX ITEM DATA TABLES BEING IN SO MANY CLASSES (MOVE TO INVENTORY ONLY - QUERY FROM THERE) /  or database subsystem
 	
 	// COMPONENTS
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
@@ -47,7 +44,11 @@ public:
 	void StartPacmanGame(AArcadeMachine* PG);
 	UFUNCTION()
 	void StopArcade();
+	UFUNCTION()
+	void BindInventoryDelegates();
 	
+	virtual void OnRep_PlayerState() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	
 	// GETTERS / QUERIES
 	UFUNCTION()

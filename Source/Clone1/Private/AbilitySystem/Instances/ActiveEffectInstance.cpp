@@ -1,13 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "AbilitySystem/Instances/ActiveEffectInstance.h"
 #include "Main/Character/AttributesComponent.h"
 #include "Main/Character/Derived/MainCharacter.h"
 
-
-void UActiveEffectInstance::Initialize(AActor* InEffectOrigin,ABaseCharacter* EffectTarget, FCharacterEffect& CharacterEffect,
-                                       FGuid& inSourceInstanceID)
+void UActiveEffectInstance::Initialize(AActor* InEffectOrigin,ABaseCharacter* EffectTarget, FCharacterEffect& CharacterEffect,FGuid& inSourceInstanceID)
 {
 	if (!EffectTarget) return;
 	CharacterInstance = EffectTarget;
@@ -24,8 +20,14 @@ void UActiveEffectInstance::Initialize(AActor* InEffectOrigin,ABaseCharacter* Ef
 
 void UActiveEffectInstance::ApplyOvertimeTick(float Value)
 {
+	if (!CharacterInstance.IsValid() || !CharacterInstance->HasAuthority())
+		return;
+	
 	AppliedRawValue += Value;
-	CharacterInstance->GetResourceComponent()->UpdateResource(CharacterEffectDefinition.TargetedResource, Value);
+	
+	if (CharacterInstance->Implements<UResourceInterface>())
+		IResourceInterface::Execute_ApplyResourceDelta(CharacterInstance.Get(), CharacterEffectDefinition.TargetedResource, Value);
+	
 	CharacterInstance->GetAttributesComponent()->IncreaseAttribute(CharacterEffectDefinition.TargetedAttribute, Value);
 }
 
@@ -45,7 +47,6 @@ void UActiveEffectInstance::Reset()
 
 void UActiveEffectInstance::Revert()
 {
-	CharacterInstance->GetResourceComponent()->UpdateResource(CharacterEffectDefinition.TargetedResource, -CharacterEffectDefinition.RawValue);
 	CharacterInstance->GetAttributesComponent()->DecreaseAttribute(CharacterEffectDefinition.TargetedAttribute, CharacterEffectDefinition.RawValue);
 }
 
@@ -63,12 +64,18 @@ void UActiveEffectInstance::HandleOvertimeTick()
 
 void UActiveEffectInstance::Apply()
 {
+	if (!CharacterInstance.Get() || !CharacterInstance->HasAuthority())
+		return;
+	
 	if (CharacterEffectDefinition.EffectMode == EEffectMode::InstantDuration || 
 		CharacterEffectDefinition.EffectMode == EEffectMode::InstantPersistent	
 	)
 	{
 		AppliedRawValue = CharacterEffectDefinition.RawValue;
-		CharacterInstance->GetResourceComponent()->UpdateResource(CharacterEffectDefinition.TargetedResource, CharacterEffectDefinition.RawValue);
+		
+		if (CharacterInstance->Implements<UResourceInterface>())
+			IResourceInterface::Execute_ApplyResourceDelta(CharacterInstance.Get(), CharacterEffectDefinition.TargetedResource, AppliedRawValue);
+		
 		CharacterInstance->GetAttributesComponent()->IncreaseAttribute(CharacterEffectDefinition.TargetedAttribute, CharacterEffectDefinition.RawValue);
 	}
 }
@@ -116,7 +123,8 @@ void UActiveEffectInstance::RemoveEffect(bool bFailure)
 {
 	if (bFailure && CharacterEffectDefinition.bRevertOnFailure)
 	{
-		CharacterInstance->GetResourceComponent()->UpdateResource(CharacterEffectDefinition.TargetedResource, -AppliedRawValue);
+		if (CharacterInstance->Implements<UResourceInterface>())
+			IResourceInterface::Execute_ApplyResourceDelta(CharacterInstance.Get(), CharacterEffectDefinition.TargetedResource,  -AppliedRawValue);
 		CharacterInstance->GetAttributesComponent()->DecreaseAttribute(CharacterEffectDefinition.TargetedAttribute, -AppliedRawValue);
 	}
 	

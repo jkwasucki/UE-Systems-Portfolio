@@ -48,7 +48,7 @@ void UEquipmentAttributesWidget::Toggle()
 	UpdateAttributeHUD(EAttribute::Speed);
 }
 
-void UEquipmentAttributesWidget::DisplayConsumableEffectWidget(UActiveEffectInstance* Effect, FName ItemID)
+void UEquipmentAttributesWidget::DisplayConsumableEffectWidget(FCharacterEffect Effect, FName ItemID)
 {
 	if (!IsValid(EffectsComponent))
 		return;
@@ -57,7 +57,6 @@ void UEquipmentAttributesWidget::DisplayConsumableEffectWidget(UActiveEffectInst
 	for (UActiveEffectInstance* E : Effects)
 	{
 		if (!IsValid(E)) continue;
-		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("SDDASDAS"));
 		GenerateConsumableEffectWidget(E->EffectInstanceID, E->CharacterEffectDefinition.Duration, ItemID);
 	}
 
@@ -82,11 +81,11 @@ void UEquipmentAttributesWidget::GenerateConsumableEffectWidget(FGuid EffecInsta
 	}
 }
 
-void UEquipmentAttributesWidget::RemoveConsumableEffectWidget(UActiveEffectInstance* Effect)
+void UEquipmentAttributesWidget::RemoveConsumableEffectWidget(FCharacterEffect Effect, FGuid EffectInstanceID)
 {
 	for (TPair<FGuid, UEquipmentConsumableEffectWidget*> Pair : ConsumableEffectWidgetMap)
 	{
-		if (Pair.Key == Effect->EffectInstanceID)
+		if (Pair.Key == EffectInstanceID)
 		{
 			Pair.Value->RemoveFromParent();
 			ConsumableEffectWidgetMap.Remove(Pair.Key);

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilityDatabaseAsset.h"
 #include "Engine/GameInstance.h"
 #include "MyGameInstance.generated.h"
 
@@ -15,6 +16,9 @@ class CLONE1_API UMyGameInstance : public UGameInstance
 	GENERATED_BODY()
 	
 	
-	public:
+public:
 	 virtual void Init() override;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ability")
+	TSoftObjectPtr<UAbilityDatabaseAsset> AbilityDatabaseAsset;
 };

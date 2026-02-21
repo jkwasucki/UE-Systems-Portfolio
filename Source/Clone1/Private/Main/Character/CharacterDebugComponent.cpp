@@ -2,8 +2,12 @@
 
 
 #include "Main/Character/CharacterDebugComponent.h"
+
+#include "AbilityDatabaseSubsystem.h"
+#include "Main/MyGameInstance.h"
 #include "Main/Character/Base/BaseCharacter.h"
 #include "Main/Character/EffectsComponent.h"
+#include "Main/PlayerState/MainPlayerState.h"
 #include "Structs/FGameplayDebugSnapshot.h"
 #include "WeaponSystem/Instances/WeaponInstance.h"
 
@@ -114,25 +118,32 @@ void UCharacterDebugComponent::AttributesChangeDebugSnapshot()
 	FAttributeDebugSnapshot Snapshot = RequestEntitySnapshotData().AttributeSnapshot;
 	OnAttributeDebugSnapshotDelegate.Broadcast(Snapshot);
 }
-void UCharacterDebugComponent::EffectExpiredDebugSnapshot(UActiveEffectInstance* EffectInstance)
+void UCharacterDebugComponent::EffectExpiredDebugSnapshot(FCharacterEffect EffectData, FGuid EffectInstanceID)
 {
 	if (!Owner.IsValid()) return;
 	FAbilityDebugSnapshot Snapshot;
-	Snapshot.Effects.Add(EffectInstance->CharacterEffectDefinition);
+	Snapshot.Effects.Add(EffectData);
 	
 	OnEffectExpiredDebugSnapshotDelegate.Broadcast(Snapshot);
 }
-void UCharacterDebugComponent::EffectAppearedDebugSnapshot(UActiveEffectInstance* EffectInstance)
+void UCharacterDebugComponent::EffectAppearedDebugSnapshot(FCharacterEffect EffectData)
 {
 	if (!Owner.IsValid()) return;
 	FAbilityDebugSnapshot Snapshot;
-	Snapshot.Effects.Add(EffectInstance->CharacterEffectDefinition);
+	Snapshot.Effects.Add(EffectData);
 	
 	OnEffectAppearDebugSnapshotDelegate.Broadcast(Snapshot);
 }
 
-void UCharacterDebugComponent::AbilityCastDebugSnapshot(UAbilityData* Ability, FGuid InstanceID, FAbilityTargetData& Targets)
+void UCharacterDebugComponent::AbilityCastDebugSnapshot(FGameplayTag AbilityTag, FGuid InstanceID, FVector AbilityDirection)
 {
+	UMyGameInstance*  GI = Owner->GetGameInstance<UMyGameInstance>();
+	if (!GI) return;
+	
+	UAbilityDatabaseSubsystem* AbilityDatabase = GI->GetSubsystem<UAbilityDatabaseSubsystem>();
+	if (!AbilityDatabase) return;
+	
+	UAbilityData* Ability = AbilityDatabase->GetAbilityByTag(AbilityTag);
 	if (!Ability) return;
 	FAbilityDebugSnapshot Snapshot;
 	
@@ -169,8 +180,18 @@ void UCharacterDebugComponent::AbilityCastDebugSnapshot(UAbilityData* Ability, F
 	
 	OnAbilityCastDebugSnapshotDelegate.Broadcast(Snapshot);
 }
-void UCharacterDebugComponent::AbilityCastFailDebugSnapshot(UAbilityData* Ability, EAbilityFailureReason Reason)
+void UCharacterDebugComponent::AbilityCastFailDebugSnapshot(FGameplayTag AbilityTag, EAbilityFailureReason Reason)
 {
+	UMyGameInstance*  GI = Owner->GetGameInstance<UMyGameInstance>();
+	if (!GI) return;
+	
+	UAbilityDatabaseSubsystem* AbilityDatabase = GI->GetSubsystem<UAbilityDatabaseSubsystem>();
+	if (!AbilityDatabase) return;
+	
+	UAbilityData* Ability = AbilityDatabase->GetAbilityByTag(AbilityTag);
+	if (!Ability) return;
+	
+	
 	const FText ReasonText =
 		StaticEnum<EAbilityFailureReason>()
 			->GetDisplayNameTextByValue(

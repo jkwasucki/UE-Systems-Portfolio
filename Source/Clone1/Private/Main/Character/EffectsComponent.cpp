@@ -5,29 +5,71 @@
 #include "Main/Character/AttributesComponent.h"
 #include "AbilitySystem/Instances/ActiveEffectInstance.h"
 #include "Main/Character/Derived/MainCharacter.h"
+#include "Net/UnrealNetwork.h"
 
-
-// Sets default values for this component's properties
 UEffectsComponent::UEffectsComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 }
 
-
-// Called when the game starts
-void UEffectsComponent::BeginPlay()
+void UEffectsComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::BeginPlay();
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UEffectsComponent,RepEffects);
 }
 
+void UEffectsComponent::OnRep_ActiveEffects()
+{
+	// New Added:
+	for (const FRepActiveEffect& NewEffect : RepEffects)
+	{
+		bool bFound = CachedEffects.ContainsByPredicate([&](const FRepActiveEffect& Old)
+		{
+			return Old.EffectInstanceID == NewEffect.EffectInstanceID;
+		});
+		if (!bFound)
+		{
+			// If not found in cached, means rep is new
+			if (NewEffect.EffectDefinition.bHasVFX)
+			{
+				OnRequestVFXDelegate.Broadcast(
+					NewEffect.EffectDefinition.VFXData,
+					NewEffect.EffectInstanceID
+				);
+				OnEffectStartDelegate.Broadcast(NewEffect.EffectDefinition);
+			}
+		}
+	}
+	
+	// Removed:
+	for (const FRepActiveEffect& OldEffect: CachedEffects)
+	{
+		bool bStillExists = RepEffects.ContainsByPredicate([&] (const FRepActiveEffect& NewEffect)
+		{
+			return NewEffect.EffectInstanceID == OldEffect.EffectInstanceID;
+		});
+		
+		if (!bStillExists)
+		{
+			OnRequestVFXEndDelegate.Broadcast(
+				OldEffect.EffectInstanceID
+			);
+			OnEffectEndDelegate.Broadcast(OldEffect.EffectDefinition, OldEffect.EffectInstanceID);
+		}
+	}
+	CachedEffects = RepEffects;
+}
 
 void UEffectsComponent::ApplyEffect(AActor* EffectOrigin,FCharacterEffect& Effect,FGuid SourceInstanceID)
 {
+	if (!GetOwner()->HasAuthority()) return;
+	
 	if (IsEffectActiveByTypeID(Effect.TypeID))
 	{
 		if (!Effect.bCanStack)
 		{
-			//REset
+			//Reset
 		}
 		else
 		{
@@ -54,13 +96,23 @@ void UEffectsComponent::ApplyEffect(AActor* EffectOrigin,FCharacterEffect& Effec
 			}
 		}
 		
-		
 		ActiveEffects.Add(NewEffect);
 		
 		if (NewEffect->CharacterEffectDefinition.bHasVFX)
 			OnRequestVFXDelegate.Broadcast(NewEffect->CharacterEffectDefinition.VFXData, NewEffect->EffectInstanceID);
-		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("EFF!"));
-		OnEffectStartDelegate.Broadcast(NewEffect);
+		
+			
+		OnEffectStartDelegate.Broadcast(NewEffect->CharacterEffectDefinition);
+		
+		// Replicate
+		FRepActiveEffect RepEffect;
+		RepEffect.EffectInstanceID = NewEffect->EffectInstanceID;
+		RepEffect.SourceInstanceID = NewEffect->SourceInstanceID;
+		RepEffect.EffectDefinition = NewEffect->CharacterEffectDefinition;
+		RepEffect.StartTime = GetWorld()->GetTimeSeconds();
+		RepEffect.Counter++;
+		
+		RepEffects.Add(RepEffect);
 	}
 }
 
@@ -102,8 +154,19 @@ void UEffectsComponent::ApplyConsumableEffect(AActor* EffectOrigin,FCharacterEff
 		
 		if (NewEffect->CharacterEffectDefinition.bHasVFX)
 			OnRequestVFXDelegate.Broadcast(NewEffect->CharacterEffectDefinition.VFXData, NewEffect->EffectInstanceID);
-		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("CONSUMABLE!"));
-		OnConsumableEffectStartDelegate.Broadcast(NewEffect, ItemID);
+	
+	
+		OnConsumableEffectStartDelegate.Broadcast(NewEffect->CharacterEffectDefinition, ItemID);
+		
+		// Replicate
+		FRepActiveEffect RepEffect;
+		RepEffect.EffectInstanceID = NewEffect->EffectInstanceID;
+		RepEffect.SourceInstanceID = NewEffect->SourceInstanceID;
+		RepEffect.EffectDefinition = NewEffect->CharacterEffectDefinition;
+		RepEffect.StartTime = GetWorld()->GetTimeSeconds();
+		RepEffect.Counter++;
+		
+		RepEffects.Add(RepEffect);
 	}
 }
 
@@ -133,11 +196,23 @@ void UEffectsComponent::HandleEffectEnded(UActiveEffectInstance* EffectInstance)
 		return;
 	
 	if (EffectInstance->CharacterEffectDefinition.bHasVFX)
+	{
 		OnRequestVFXEndDelegate.Broadcast(EffectInstance->EffectInstanceID);
+		// Multicast_OnRequestVFXEnd(EffectInstance->EffectInstanceID);
+	}
+	
 	
 	
 	ActiveEffects.Remove(EffectInstance);
-	OnEffectEndDelegate.Broadcast(EffectInstance);
+	OnEffectEndDelegate.Broadcast(EffectInstance->CharacterEffectDefinition, EffectInstance->EffectInstanceID);
+	
+	// Replicate
+	RepEffects.RemoveAllSwap([&](const FRepActiveEffect& E)
+	{
+		return E.EffectInstanceID == EffectInstance->EffectInstanceID;
+	});
+	
+	
 }
 
 void UEffectsComponent::ExternalOriginAborted(AActor* EffectOrigin, const FGuid& SourceInstanceID)
@@ -147,8 +222,6 @@ void UEffectsComponent::ExternalOriginAborted(AActor* EffectOrigin, const FGuid&
 	{
 		OnRequestVFXEndDelegate.Broadcast(InstanceID);
 	}
-	
-	
 }
 
 TArray<FCharacterEffect> UEffectsComponent::GetActiveEffectsDefinitions()

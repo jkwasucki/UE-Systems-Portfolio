@@ -5,13 +5,30 @@
 
 #include "NiagaraFunctionLibrary.h"
 #include "Interfaces/CharacterEffectReciverInterface.h"
-#include "Interfaces/DamageableInterface.h"
+#include "Net/UnrealNetwork.h"
+
+
+void AAbilityAreaOccurence::OnRep_Initialized()
+{
+	InitializeAreaOccurence(RepOriginActor.Get(),RepAreaOccurenceData,RepSpawnLocation);
+}
+
+void AAbilityAreaOccurence::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AAbilityAreaOccurence,RepOriginActor);
+	DOREPLIFETIME(AAbilityAreaOccurence,RepAreaOccurenceData);
+	DOREPLIFETIME(AAbilityAreaOccurence,RepSpawnLocation);
+	DOREPLIFETIME(AAbilityAreaOccurence,bInitialized);
+}
 
 // Sets default values
 AAbilityAreaOccurence::AAbilityAreaOccurence()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates =  true;
+	SetReplicateMovement(true);
+	
 	Collider = CreateDefaultSubobject<USphereComponent>(TEXT("Collider"));
 	SetRootComponent(Collider);
 	
@@ -26,6 +43,7 @@ AAbilityAreaOccurence::AAbilityAreaOccurence()
 	
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &AAbilityAreaOccurence::OnOverlapped);
 }
+
 void AAbilityAreaOccurence::InitializeAreaOccurence(AActor* InOriginActor,FAbilityAreaOccurenceData& Data,FVector& SpawnLocation)
 {
 	OriginActor = InOriginActor;
@@ -34,6 +52,12 @@ void AAbilityAreaOccurence::InitializeAreaOccurence(AActor* InOriginActor,FAbili
 	SpawnNiagara(SpawnLocation);
 	
 	Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	
+	// Replicate
+	RepOriginActor = InOriginActor;
+	RepAreaOccurenceData = Data;
+	RepSpawnLocation = SpawnLocation;
+	bInitialized = true;
 }
 
 void AAbilityAreaOccurence::OnOverlapped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -54,7 +78,7 @@ void AAbilityAreaOccurence::OnOverlapped(UPrimitiveComponent* OverlappedComponen
 
 		ICharacterEffectReceiverInterface::Execute_ApplyEffect(
 			OtherActor,
-			OriginActor,
+			OriginActor.Get(),
 			Effect->EffectData,
 			FGuid()
 		);

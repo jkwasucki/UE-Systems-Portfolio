@@ -13,6 +13,8 @@ AMainPlayerState::AMainPlayerState()
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 	EquipmentComponent = CreateDefaultSubobject<UEquipmentComponent>("EquipmentComponent");
 	QuestSystemComponent = CreateDefaultSubobject<UQuestComponent>("QuestSystemComponent");
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true);
 }
 
 void AMainPlayerState::BeginPlay()
@@ -21,19 +23,26 @@ void AMainPlayerState::BeginPlay()
 	
 	InventoryComponent->SetEquipmentComponentLink(EquipmentComponent);
 	EquipmentComponent->SetInventoryComponentLink(InventoryComponent);
+	AbilitySystemComponent->Init(this);
+	
+	if (HasAuthority())
+	{
+		AbilitySystemComponent->GrantAbilities(GetAbilities());
+	}
 	
 }
+
 
 TArray<UAbilityData*> AMainPlayerState::GetAbilities() const
 {
 	return AvailableAbilities;
 }
 
-UAbilityData* AMainPlayerState::GetAbilityBySlot(FGameplayTag Tag)
+UAbilityData* AMainPlayerState::GetAbilityBySlot(FGameplayTag SlotTag)
 {
 	for (const FFAbilitySlot& Slot : AbilitySlots)
 	{
-		if (Slot.SlotTag == Tag)
+		if (Slot.SlotTag == SlotTag)
 			return Slot.AbilityData;
 	}
 	return nullptr;

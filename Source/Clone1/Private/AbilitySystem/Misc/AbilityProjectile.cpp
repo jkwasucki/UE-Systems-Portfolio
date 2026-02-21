@@ -6,13 +6,16 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Interfaces/CharacterEffectReciverInterface.h"
-#include "Interfaces/DamageableInterface.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AAbilityProjectile::AAbilityProjectile()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	SetReplicateMovement(true);
+	
 	
 	ProjectileMoverComponent = CreateDefaultSubobject<UProjectileMoverComponent>("MoverComponent");
 	
@@ -34,10 +37,19 @@ AAbilityProjectile::AAbilityProjectile()
 	
 } 
 
-// Called when the game starts or when spawned
-void AAbilityProjectile::BeginPlay()
+void AAbilityProjectile::OnRep_Initialized()
 {
-	Super::BeginPlay();
+	InitializeProjectile(RepOriginActor.Get(),RepProjectileData,RepTargetData);
+}
+
+void AAbilityProjectile::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(AAbilityProjectile, RepProjectileData);
+	DOREPLIFETIME(AAbilityProjectile, RepOriginActor);
+	DOREPLIFETIME(AAbilityProjectile, bIsInitialized);
+	DOREPLIFETIME(AAbilityProjectile, RepTargetData);
 }
 
 void AAbilityProjectile::InitializeProjectile(AActor* InOriginActor,FAbilityProjectileData& Data, FAbilityTargetData& TargetData)
@@ -48,12 +60,19 @@ void AAbilityProjectile::InitializeProjectile(AActor* InOriginActor,FAbilityProj
 	SpawnNiagara();
 	ProjectileMoverComponent->InitializeFromTargetData(TargetData);
 	
+	
+	// Replication
+	RepOriginActor = InOriginActor;
+	RepProjectileData = Data;
+	RepTargetData = TargetData;
+	bIsInitialized = true;
+	
 }
 
 void AAbilityProjectile::OnOverlapped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!IsValid(OtherActor) || OtherActor == GetOwner())
+	if (!IsValid(OtherActor) || OtherActor == OriginActor)
 	{
 		return;
 	}
@@ -85,7 +104,7 @@ void AAbilityProjectile::OnOverlapped(UPrimitiveComponent* OverlappedComponent, 
 
 			ICharacterEffectReceiverInterface::Execute_ApplyEffect(
 				OtherActor,        // target (implements interface)
-				OriginActor,       // source
+				OriginActor.Get(),       // source
 				Effect->EffectData,
 				FGuid()
 			);
@@ -108,6 +127,8 @@ void AAbilityProjectile::SpawnHitNiagara()
 		true
 	);
 }
+
+
 
 void AAbilityProjectile::SpawnNiagara()
 {

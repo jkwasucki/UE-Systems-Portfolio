@@ -30,6 +30,7 @@ protected:
 	UPROPERTY()
 	TWeakObjectPtr<ABaseCharacter> Owner = nullptr;
 	
+	
 public:	
 	FOnAbilityCastDebugSnapshot OnAbilityCastDebugSnapshotDelegate;
 	FOnResourcesDebugSnapshot OnResourcesDebugSnapshotDelegate;
@@ -49,9 +50,9 @@ protected:
 	void AttributesChangeDebugSnapshot();
 	
 	UFUNCTION()
-	void EffectExpiredDebugSnapshot(UActiveEffectInstance* EffectInstance);
+	void EffectExpiredDebugSnapshot(FCharacterEffect EffectData, FGuid EffectInstanceID);
 	UFUNCTION()
-	void EffectAppearedDebugSnapshot(UActiveEffectInstance* EffectInstance);
+	void EffectAppearedDebugSnapshot(FCharacterEffect EffectData);
 	UFUNCTION()
 	void RequestDebugSnapshots();
 	UFUNCTION()
@@ -62,9 +63,9 @@ protected:
 	void HandleWeaponDebugSnapshot_Init(UWeaponInstance* WeaponInstance);
 public:
 	UFUNCTION()
-	void AbilityCastFailDebugSnapshot( UAbilityData* Ability, EAbilityFailureReason Reason);
+	void AbilityCastFailDebugSnapshot(FGameplayTag AbilityTag, EAbilityFailureReason Reason);
 	UFUNCTION()
-	void AbilityCastDebugSnapshot(UAbilityData* Ability,  FGuid InstanceID, FAbilityTargetData& Targets );
+	void AbilityCastDebugSnapshot(FGameplayTag AbilityTag,  FGuid InstanceID, FVector AbilityDirection );
 
 	UFUNCTION()
 	void Init(ABaseCharacter* InOwner);

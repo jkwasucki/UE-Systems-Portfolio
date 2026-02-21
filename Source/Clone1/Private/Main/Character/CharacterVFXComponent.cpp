@@ -15,7 +15,7 @@ UCharacterVFXComponent::UCharacterVFXComponent()
 	// ...
 }
 
-void UCharacterVFXComponent::PlayVFX(FVFXData& VFXData, const FGuid& Identifier)
+void UCharacterVFXComponent::PlayVFX(FVFXData VFXData, const FGuid Identifier)
 {
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 	

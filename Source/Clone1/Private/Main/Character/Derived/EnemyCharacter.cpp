@@ -24,15 +24,15 @@ void AEnemyCharacter::BeginPlay()
 		FAttachmentTransformRules::KeepRelativeTransform
 	);
 	
+	AbilitySystemComponent->SetPawn(this);
+	
 	// ABILITIES
 	TArray<UAbilityData*> Abilities;
 	Abilities.Add(AvailableAbility);
 	AbilitySystemComponent->GrantAbilities(Abilities); 
 	AbilitySystemComponent->OnStateRequestDelegate.BindUObject(this,&ABaseCharacter::SetState);
-	AbilitySystemComponent->OnAbilityCastDelegate.AddDynamic(this, &AEnemyCharacter::ApplyAbilityVisuals);
+	AbilitySystemComponent->OnAbilityCastedDelegate.AddDynamic(this, &AEnemyCharacter::ApplyAbilityVisuals);
 	AbilitySystemComponent->OnAbilityAbortedDelegate.AddDynamic(this, &AEnemyCharacter::CleanupAbilityVisuals);
-	AbilitySystemComponent->OnBeginCastDelegate.AddDynamic(GetMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
-	AbilitySystemComponent->OnEndCastDelegate.AddDynamic(GetMoverComponent(), &UCharacterMoverComponent::ToggleMovement);
 }
 
 
@@ -41,35 +41,12 @@ float AEnemyCharacter::GetEnergy_Implementation() const
 	return ResourceComponent->GetEnergy();
 }
 
-void AEnemyCharacter::ModifyEnergy_Implementation(float Delta)
-{
-	if (!bIsAlive) return;
-	
-	ResourceComponent->UpdateEnergy(Delta);
-}
-
 
 float AEnemyCharacter::GetHealth_Implementation() const
 {
 	return ResourceComponent->GetHealth();
 }
-void AEnemyCharacter::ModifyHealth_Implementation(float Delta)
-{
-	if (!bIsAlive) return;
-	
-	ResourceComponent->UpdateHealth(Delta);
-}
 
-void AEnemyCharacter::TakeDamage_Implementation(float Delta)
-{
-	if (!bIsAlive) return;
-
-	float HealthLeft = ResourceComponent->GetHealth();
-	if (HealthLeft <= 0)
-		Die();
-	else
-		AnimationComponent->PlayAnimationByTag(FAnimationTags::Animation_CharacterHit);
-}
 
 void AEnemyCharacter::ApplyEffect_Implementation(AActor* EffectOrigin, FCharacterEffect& Effect, FGuid SourceInstanceID)
 {
@@ -79,27 +56,48 @@ void AEnemyCharacter::ApplyEffect_Implementation(AActor* EffectOrigin, FCharacte
 void AEnemyCharacter::OnRespondToHealthChange(float Delta)
 {
 	Super::OnRespondToHealthChange(Delta);
-	if (Delta <= 0)
-		TakeDamage_Implementation(Delta);
 	
 	if (!bIsAlive && GetHealth_Implementation() == 100.f)
-	{
 		Resurrect();
+
+	if (!bIsAlive) return;
+
+	float HealthLeft = ResourceComponent->GetHealth();
+	if (HealthLeft <= 0)
+		Die();
+	else
+		AnimationComponent->PlayAnimationByTag(FAnimationTags::Animation_CharacterHit);
+}
+
+void AEnemyCharacter::ApplyResourceDelta_Implementation(ECharacterResource Type, float Delta)
+{
+	
+	switch (Type)
+	{
+	case ECharacterResource::Health:
+		GetResourceComponent()->UpdateHealth(Delta);
+		break;
+	case ECharacterResource::Energy:
+		GetResourceComponent()->UpdateEnergy(Delta);
+		break;
+	default:
+		break;
 	}
 }
+
 // ABILITY VISUALS HANDLING
-void AEnemyCharacter::ApplyAbilityVisuals(UAbilityData* Ability,  FGuid InstanceID,  FAbilityTargetData& Targets)
+void AEnemyCharacter::ApplyAbilityVisuals(FGameplayTag AbilityTag,  FGuid InstanceID,  FVector AbilityDirection)
 {
-	if (!Ability)
+	if (!AvailableAbility)
 		return;
-	GetAnimationComponent()->PlayAnimation(Ability->AnimationData);
+	GetAnimationComponent()->PlayAnimation(AvailableAbility->AnimationData);
 	if (!GetMoverComponent()->IsCharacterMoving())
 	{
 		
-		GetAnimationComponent()->RequestRotate(Targets.Direction);
+		GetAnimationComponent()->RequestRotate(AbilityDirection);
 	}
 	
-	for (FVFXData VFX : Ability->VFXData)
+	for (FVFXData VFX : AvailableAbility->VFXData)
 	{
 		GetVFXComponent()->PlayVFX(VFX, InstanceID);
 	}
@@ -112,4 +110,8 @@ void AEnemyCharacter::CleanupAbilityVisuals(AActor* AbilityOwner, const FGuid& I
 UAbilitySystemComponent* AEnemyCharacter::GetAbilitySystemComponent_Implementation()
 {
 	return AbilitySystemComponent;
+}
+void AEnemyCharacter::OnAbilityCast(bool bState)
+{
+	MoverComponent->ToggleMovement(!bState);
 }

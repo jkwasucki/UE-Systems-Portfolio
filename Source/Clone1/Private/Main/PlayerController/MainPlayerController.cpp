@@ -20,19 +20,28 @@ void AMainPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (IsLocalController())
+	{
+		if (HUDComponent)
+		{
+			HUDComponent->Init(this);
+		}
+	}
 	
-	//Capture drop requests from InventoryComponent (PlayerState)
-	GetPlayerState<AMainPlayerState>()->InventoryComponent->OnRequestDropDelegate.AddDynamic(this, &AMainPlayerController::SpawnItemActor);
-	HUDComponent->Init(this);
-	
-	
-	InputHandlerComponent->OnInputSaveGameDelegate.AddDynamic(this, &AMainPlayerController::RequestSaveGame);
+	if (InputHandlerComponent)
+	{
+		InputHandlerComponent->OnInputSaveGameDelegate.AddDynamic(this, &AMainPlayerController::RequestSaveGame);
+	}
 	
 	// INITIAL GAME LOAD
-	if (UGameSaveSubsystem* GameSaveSubsystem = GetGameInstance()->GetSubsystem<UGameSaveSubsystem>())
+	if (HasAuthority())
 	{
-		GameSaveSubsystem->LoadGame(TEXT("DefaultSlot"));
+		if (UGameSaveSubsystem* GameSaveSubsystem = GetGameInstance()->GetSubsystem<UGameSaveSubsystem>())
+		{
+			GameSaveSubsystem->LoadGame(TEXT("DefaultSlot"));
+		}
 	}
+	
 }
 
 void AMainPlayerController::SetupInputComponent()
@@ -118,6 +127,37 @@ void AMainPlayerController::StopArcade()
 	SetIgnoreLookInput(false);
 	SetIgnoreMoveInput(false);
 }
+
+void AMainPlayerController::BindInventoryDelegates()
+{
+	//Capture drop requests from InventoryComponent (PlayerState)
+	AMainPlayerState* PS = GetPlayerState<AMainPlayerState>();
+	if (PS && PS->InventoryComponent)
+	{
+		PS->InventoryComponent->OnRequestDropDelegate.AddDynamic(
+			this,
+			&AMainPlayerController::SpawnItemActor
+		);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerState or InventoryComponent not ready in BeginPlay"));
+	}
+}
+
+void AMainPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	BindInventoryDelegates();
+}
+
+
+void AMainPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	BindInventoryDelegates();
+}
+
 UHUDComponent* AMainPlayerController::GetHUDComponent() const
 {
 	return FindComponentByClass<UHUDComponent>();

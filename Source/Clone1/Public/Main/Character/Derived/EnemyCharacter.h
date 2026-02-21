@@ -6,7 +6,6 @@
 #include "Main/Character/EnemyAIComponent.h"
 #include "Main/Character/Base/BaseCharacter.h"
 #include "Interfaces/CharacterEffectReciverInterface.h"
-#include "Interfaces/DamageableInterface.h"
 #include "Interfaces/ResourceInterface.h"
 #include "EnemyCharacter.generated.h"
 
@@ -14,7 +13,7 @@
  * 
  */
 UCLASS()
-class CLONE1_API AEnemyCharacter : public ABaseCharacter, public IResourceInterface, public IDamageableInterface, public ICharacterEffectReceiverInterface
+class CLONE1_API AEnemyCharacter : public ABaseCharacter, public IResourceInterface, public ICharacterEffectReceiverInterface
 {
 	GENERATED_BODY()
 	
@@ -33,7 +32,7 @@ public:
 	
 protected:
 	UFUNCTION()
-	void ApplyAbilityVisuals(UAbilityData* Ability,  FGuid InstanceID,  FAbilityTargetData& Targets);
+	void ApplyAbilityVisuals(FGameplayTag AbilityTag,  FGuid InstanceID, FVector AbilityDirection);
 	UFUNCTION()
 	void CleanupAbilityVisuals(AActor* AbilityOwner, const FGuid& Identifier);
 public:
@@ -45,11 +44,11 @@ public:
 	// Resource Interface
 	virtual float GetHealth_Implementation() const override;
 	virtual float GetEnergy_Implementation() const override;
-	virtual void ModifyEnergy_Implementation(float Delta) override;
-	virtual void ModifyHealth_Implementation(float Delta) override;
+	virtual void ApplyResourceDelta_Implementation(ECharacterResource Type, float Delta) override;
 	
-	// Damageable Interface
-	virtual void TakeDamage_Implementation(float Value)  override;
+	UFUNCTION()
+	void OnAbilityCast(bool bState);
+
 	// Character Effect Interface
 	virtual void ApplyEffect_Implementation(AActor* EffectOrigin, FCharacterEffect& Effects, FGuid SourceInstanceID) override;	
 	virtual void OnRespondToHealthChange(float Delta) override;

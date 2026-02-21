@@ -2,8 +2,9 @@
 
 
 #include "WeaponSystem/Instances/WeaponInstance.h"
-#include "Interfaces/DamageableInterface.h"
 
+#include "Interfaces/ResourceInterface.h"
+#include "Types/CharacterTypes.h"
 
 
 void UWeaponInstance::Init(UWeaponDefinition* Definition, APawn* InOwner)
@@ -111,9 +112,9 @@ void UWeaponInstance::TryFiring()
 			WeaponDefinition->Damage
 		);
 		
-		if (HitActor->Implements<UDamageableInterface>())
+		if (HitActor->Implements<UResourceInterface>())
 		{
-			IDamageableInterface::Execute_TakeDamage(HitActor, WeaponDefinition->Damage);
+			IResourceInterface::Execute_ApplyResourceDelta(HitActor,ECharacterResource::Health, WeaponDefinition->Damage);
 		}
 	}
 }

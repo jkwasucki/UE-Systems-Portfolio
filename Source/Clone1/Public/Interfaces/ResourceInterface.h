@@ -15,12 +15,12 @@ class IResourceInterface
 
 public:
 	UFUNCTION(BlueprintNativeEvent)
-	float GetHealth() const;
+	void ApplyResourceDelta(ECharacterResource Type, float Delta);
+	
 	UFUNCTION(BlueprintNativeEvent)
-	void ModifyHealth(float Delta);
-
+	float GetHealth() const;
+	
 	UFUNCTION(BlueprintNativeEvent)
 	float GetEnergy() const;
-	UFUNCTION(BlueprintNativeEvent)
-	void ModifyEnergy(float Delta);
+
 };

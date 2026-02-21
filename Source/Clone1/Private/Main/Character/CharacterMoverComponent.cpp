@@ -50,13 +50,13 @@ void UCharacterMoverComponent::ToggleMovement(bool bState)
 	if (!MoveComp)
 		return;
 
-	if (bState)
+	if (!bState)
 	{
-		MoveComp->SetMovementMode(MOVE_Walking);
+		MoveComp->DisableMovement();
 	}
 	else
 	{
-		MoveComp->DisableMovement();
+		MoveComp->SetMovementMode(MOVE_Walking);
 	}
 }
 

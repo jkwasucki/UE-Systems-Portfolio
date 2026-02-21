@@ -32,16 +32,16 @@ protected:
 	float AppliedRawValue = 0;
 public:
 	UPROPERTY()
-	ABaseCharacter* CharacterInstance;
+	TWeakObjectPtr<ABaseCharacter> CharacterInstance;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	FGuid EffectInstanceID; // Runtime instance id of this effect
+	FGuid EffectInstanceID;								// Runtime instance id of this effect
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	FGuid SourceInstanceID; // Does this effect come from some other instanced object it has to keep reference of? (eg. Ability) 
+	FGuid SourceInstanceID;								// Does this effect come from some other instanced object it has to keep reference of? (eg. Ability) 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FCharacterEffect CharacterEffectDefinition;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	AActor* EffectOrigin; // From which actor the effect took place
+	AActor* EffectOrigin;								// From which actor the effect took place
 	
 	FOnEffectEnd OnEffectEndDelegate;
 	
