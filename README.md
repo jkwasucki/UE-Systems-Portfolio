@@ -2,9 +2,13 @@
 
 # Gameplay Systems
 
+This repository contains my primary gameplay programming portfolio built in Unreal Engine 5 using C++.
+
+It serves as a focused demonstration of my approach to gameplay architecture and systems development.
 
 ## Table of Contents
 - [Ability System](#ability-system-unreal-engine-c)
+- [Multiplayer & Replication Experiment](#multiplayer--replication-experiment-unreal-engine-c)
 - [Character & Combat Core](#character--combat-core-unreal-engine-c)
 - [Inventory & Equipment System](#inventory--equipment-system-unreal-engine-c)
 - [Save & Persistance System](#save-system--persistance-unreal-engine-c)
@@ -155,10 +159,154 @@ This allows quick verification of gameplay state during:
 
 ---
 
+
+# Multiplayer & Replication Experiment (Unreal Engine C++)
+
+The gameplay systems such as **AbilitySystem**, **EffectsComponent** and **ResourceComponent** support networked play using an authoritative server model, where the server owns all gameplay state and clients act as input sources and presentation layers.
+
+Replication is designed around state synchronization, not just RPC calls, ensuring correctness for late joiners, reconnections, and network inconsistencies.
+
+---
+
+## Core Principles:
+
+  - Server-authoritative gameplay
+  - All abilities, effects, resources, and state changes are executed on the server.
+  - Clients only request
+  - Input and targeting data are validated server-side.
+  - Long-lived gameplay states are synchronized via replicated variables.
+  - Presentation reconstructed locally
+  - Clients rebuild visuals and UI using replicated data and delegates.
+
+---
+
+## Ability System Replication
+
+The UAbilitySystemComponent synchronizes ability usage across the network through a combination of:
+
+  - Server-side validation and execution
+  - Replicated state structures
+  - Multicast events for immediate feedback
+
+## Server Execution Flow
+
+1. Client sends ability input and targeting data.
+    Server validates:
+    - energy cost
+    - cooldown
+    - granted ability ownership
+    - targeting data
+2. Server commits cost and executes effects.
+3. Replicated state and multicast events notify clients.
+
+---
+
+## Replicated Casting State
+
+Casting is synchronized using a replicated structure:
+```
+  - ability tag
+  - instance ID
+  - origin actor
+  - direction
+  - casting state flags
+  - abort flag
+  - update counter
+```
+This allows clients to:
+  - display cast animations
+  - spawn VFX
+  - react to aborts
+  - maintain consistency across network updates
+
+## Immediate Feedback via Multicast
+
+NetMulticast RPCs are used for time-sensitive events:
+  - ability successfully cast
+  - cast state changes
+  - ability aborted
+
+These events trigger animations, VFX, and UI updates without waiting for full state replication.
+
+---
+
+## Effects Replication
+
+Active gameplay effects are replicated as lightweight descriptors instead of replicating runtime objects.
+
+**Replicated Effect Data**
+
+Each effect entry includes:
+
+    - effect instance ID
+    - source instance ID
+    - effect definition
+    - start time
+    - stack/refresh counter
+
+The server updates this list whenever effects are added or removed.
+
+**OnRep State Synchronization**
+
+Clients use an OnRep callback to compare the replicated effect list with their previous local state.
+Instead of rerunning gameplay logic, clients perform a diff-based reconstruction.
+
+**1. Added Effects**
+
+    If an effect appears in the new replicated state but was not previously present:
+    - Spawn VFX
+    - Display status indicators
+    - Broadcast effect start events
+
+**2.Removed Effects**
+
+    If an effect no longer exists in the replicated state:
+    - Stop VFX
+    - Remove UI elements
+    - Broadcast effect end events
+
+### Separation of Simulation and Presentation
+
+    Server: authoritative simulation
+    Clients: visual reconstruction
+
+  Clients never apply attribute changes or gameplay consequences directly.
+  This ensures deterministic gameplay while keeping network traffic minimal.
+
+### Handling External Dependencies
+
+  Effects originating from other actors remain synchronized:
+  - If an ability is aborted on the source actor, dependent effects are removed.
+  - Receivers listen for abort events to clean up correctly.
+  - VFX are stopped through replicated state changes.
+  
+  **Benefits of the Approach**:
+
+  - Supports late-joining players automatically
+  - Prevents duplicated or desynchronized effects
+  - Avoids excessive RPC usage for persistent states
+  - Maintains consistent visuals across all clients
+  - Keeps gameplay logic centralized and authoritative
+
+---
+
+### What I Learned
+
+  - How to implement server-authoritative gameplay in Unreal Engine.
+  - When to use RPCs vs replicated variables.
+  - How to synchronize complex gameplay state without replaying logic on clients.
+  - How to design systems that remain correct for late joiners.
+  - How to separate simulation from presentation in multiplayer architecture.
+
+---
+
+---
+
+---
+
 # Save System & Persistance (Unreal Engine C++)
 
 A modular, component-driven save system built in Unreal Engine, designed around clear ownership, binary serialization, and subsystem-based orchestration.
-
 Instead of relying on a monolithic save structure, each gameplay component owns its own persistence logic, while a central subsystem handles disk I/O and state application.
 
 * * *
@@ -212,9 +360,7 @@ All saveable components implement: **ISavableInterface**
 **Purpose:**
 
   - Standard save contract.
-
   - No hard references between systems.
-
   - Plug-and-play save support.
 
 ### Save Subsystem
@@ -224,11 +370,8 @@ Acts as the single authority for persistence.
 **Responsibilities:**
 
   - Saving to disk
-
   - Loading from disk
-
   - Storing pending load data
-
   - Applying saved data to components
 
 
@@ -284,9 +427,7 @@ This ensures all gameplay systems are fully initialized before state is applied.
 Component-Driven Persistence
 
   - New systems without modifying core save structs.
-
   - Independent serialization logic per component.
-
   - Reduced coupling between gameplay features.
 
 ### Current Feature Set
@@ -294,35 +435,24 @@ Component-Driven Persistence
 **Core Features**
 
   - Component-based persistence
-
   - Interface-driven save contract
-
   - Binary serialization per component
-
   - Subsystem-controlled disk I/O
-
   - Two-phase load pipeline
-
   - Pawn + PlayerState coverage
 
 **Qualities**
 
   - Decoupled gameplay systems
-
   - Clear data ownership
-
   - Easily extensible
-
   - Production-style structure
 
 Future systems can be added without redesign.
 
 ### What I Learned
-
   - How to use Unreal subsystems as global gameplay services.
-
   - How to avoid initialization order bugs using a two-phase load pipeline.
-
   - How to use binary serialization for flexible, decoupled save data.
 
 ---
@@ -523,7 +653,6 @@ Gameplay logic lives entirely in **Actor Components**, while the UI layer acts a
 # Interaction System (Unreal Engine C++)
 
 A modular, data-driven interaction framework built in Unreal Engine C++, designed with clear ownership, reusable actions, and event-driven communication between player, world objects, and UI.
-
 The system allows world actors to expose interaction definitions, while the player executes interactions through a dedicated Interactor Component.
 
 ---
