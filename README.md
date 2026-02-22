@@ -166,6 +166,8 @@ The gameplay systems such as **AbilitySystem**, **EffectsComponent** and **Resou
 
 Replication is designed around state synchronization, not just RPC calls, ensuring correctness for late joiners, reconnections, and network inconsistencies.
 
+### Short video showcase - https://youtu.be/x-7mvfua0Qc
+
 ---
 
 ## Core Principles:
