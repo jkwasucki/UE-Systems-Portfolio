@@ -21,6 +21,7 @@ It serves as a focused demonstration of my approach to gameplay architecture and
 
 ---
 
+
 # Ability System (Unreal Engine C++)
 
 A lightweight, modular **Ability + Effects framework** built in Unreal Engine C++, designed around **clear ownership**, **data-driven definitions**, and **event-driven execution**.  
@@ -78,6 +79,33 @@ Instead of using GAS, this system focuses on readable gameplay architecture: **a
    - track cooldown and broadcast events
    - refund cost and fail if nothing successfully applied
 
+## Visualized
+---
+    Player input or AI request
+            ↓
+    Local targeting resolution (client)
+            ↓
+    Server RPC: ResolveAbilityInput_Server
+            ↓
+    AbilitySystemComponent (Server authority)
+            ↓
+    Validate ability:
+        - resource check
+        - cooldown check
+        - granted ability check
+        - targeting validity
+            ↓
+    Commit cost:
+        - consume energy/resource
+            ↓
+    Create UActiveAbilityInstance
+            ↓
+    Enter casting state
+            ↓
+    Apply ability effects to targets
+            ↓
+    Start cooldown tracking
+
 ---
 
 ## Effects System
@@ -94,6 +122,63 @@ Instead of using GAS, this system focuses on readable gameplay architecture: **a
 - Supports **cross-actor ownership**:
   - if an effect originates from another actor, the receiver listens for ability abort and cleans up correctly
 
+## Effect Application Flow 
+---
+
+    AbilitySystem executes ability
+            ↓
+    UAbilityEffect::TryApplyEffect()
+            ↓
+    For each target actor:
+        Check CharacterEffectReceiver interface
+            ↓
+    Target::ApplyEffect()
+            ↓
+    EffectsComponent::ApplyEffect()  (Server authority)
+            ↓
+    Create UActiveEffectInstance
+            ↓
+    Initialize instance:
+        - store origin
+        - assign IDs
+        - copy definition
+            ↓
+    Apply initial effect (if instant)
+            ↓
+    Setup duration + overtime timers
+            ↓
+    Add to ActiveEffects list
+            ↓
+    Broadcast Effect Start
+            ↓
+    Replicate FRepActiveEffect to clients
+
+
+### Active Effect Lifecycle
+---
+
+    Effect instance active
+            ↓
+    If Overtime:
+        Every tick interval:
+            Apply resource delta
+            Modify attributes
+            Track executed ticks
+            ↓
+    Duration timer expires
+            ↓
+    RemoveEffect()
+            ↓
+    If InstantDuration:
+        Revert attribute changes
+            ↓
+    Clear timers
+            ↓
+    Broadcast OnEffectEnd
+            ↓
+    Remove from ActiveEffects list
+            ↓
+    Remove replicated entry
 ---
 
 ## Debug & Development Tools
