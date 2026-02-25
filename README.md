@@ -15,6 +15,13 @@ It serves as a focused demonstration of my approach to gameplay architecture and
 - [Interaction System](#interaction-system-unreal-engine-c)
 - [Pacman](#pacman-unreal-engine-c)
 
+
+**Not yet fully implemented:**
+
+- [Gunplay Core + attachments]
+
+- [Enemy AI]
+
 ---
 
 ---
