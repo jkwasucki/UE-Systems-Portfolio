@@ -229,9 +229,9 @@ This allows quick verification of gameplay state during:
 
 ## Design Principles
 
-- **Ownership first**: gameplay state lives in components, UI/VFX respond via delegates
+- **Ownership**: gameplay state lives in components, UI/VFX respond via delegates
 - **Data over hardcode**: ability behavior defined through assets and effect classes
-- **Composable execution**: abilities run modular effect blocks
+- **Composable execution**: abilities run modular effect logic blocks
 - **No GAS dependency**: architecture stays understandable and debuggable while still scalable
 
 ---
@@ -254,9 +254,9 @@ This allows quick verification of gameplay state during:
 
 # Multiplayer & Replication Experiment (Unreal Engine C++)
 
-The gameplay systems such as **AbilitySystem**, **EffectsComponent** and **ResourceComponent** support networked play using an authoritative server model, where the server owns all gameplay state and clients act as input sources and presentation layers.
+The gameplay systems such as **AbilitySystem**, **EffectsComponent** and **ResourceComponent** support net-play using an authoritative server model, where the server owns all gameplay state and clients act as input sources and presentation layers.
 
-Replication is designed around state synchronization, not just RPC calls, ensuring correctness for late joiners, reconnections, and network inconsistencies.
+Replication is designed around state synchronization, ensuring correctness for late joiners, reconnections, and network inconsistencies.
 
 ### Short video showcase - https://youtu.be/x-7mvfua0Qc
 
@@ -280,7 +280,7 @@ The UAbilitySystemComponent synchronizes ability usage across the network throug
 
   - Server-side validation and execution
   - Replicated state structures
-  - Multicast events for immediate feedback
+  - Multicast events for instant feedback
 
 ## Server Execution Flow
 
@@ -367,18 +367,10 @@ Instead of rerunning gameplay logic, clients perform a diff-based reconstruction
   Clients never apply attribute changes or gameplay consequences directly.
   This ensures deterministic gameplay while keeping network traffic minimal.
 
-### Handling External Dependencies
-
-  Effects originating from other actors remain synchronized:
-  - If an ability is aborted on the source actor, dependent effects are removed.
-  - Receivers listen for abort events to clean up correctly.
-  - VFX are stopped through replicated state changes.
-  
   **Benefits of the Approach**:
 
   - Supports late-joining players automatically
   - Prevents duplicated or desynchronized effects
-  - Avoids excessive RPC usage for persistent states
   - Maintains consistent visuals across all clients
   - Keeps gameplay logic centralized and authoritative
 
@@ -809,7 +801,7 @@ When an interaction is triggered:
    - Interaction definition.
 3. The instance spawns and executes all actions defined in the interaction.
 
-This creates a **self-contained execution context** for each interaction.
+This creates an **independent execution context** for each interaction.
 
 ---
 
@@ -849,7 +841,7 @@ Because actions are independent classes:
 ## Key Design Highlights
 
 - **Data-driven interactions** using Primary Data Assets.
-- **Reusable action classes** instead of hard-coded logic.
+- **Reusable action classes** instead of hardcoded logic.
 - **Player-owned interaction pipeline** with clear responsibility.
 - **Interface-based communication** with world actors.
 - **Event-driven UI prompts and highlighting.**
@@ -858,7 +850,7 @@ Because actions are independent classes:
 
 ## What I Learned
 
-- How to design a **generic interaction pipeline** instead of one-off interaction code.
+- How to design a **generic interaction pipeline** instead of monolithic and explicit interaction code.
 - How to structure interactions so that:
   - the player owns execution logic,
   - world actors remain lightweight and decoupled.
@@ -894,17 +886,16 @@ A modular **Pacman gameplay system** built in **Unreal Engine (C++)**, designed 
 
 - A **central gameplay authority** owns global state (**score**, **lives**, **ghost modes**, **game flow**), while actors react through **delegates** instead of direct dependencies.
 - Player and AI entities share a **common base**, with **grid-based movement** implemented as a reusable **gameplay component**.
-- Ghost behavior follows classic Pacman rules (*Scatter / Chase / Frightened*), implemented via **timed state transitions** and **grid-based targeting** (not per-frame scripting).
+- Ghost behavior follows classic Pacman rules (*Scatter / Chase / Frightened*), implemented via **timed state transitions** and **grid-based targeting**.
 - Level layout and collectibles are **data-driven**, separating **board definition** from **gameplay logic**.
 - UI and world interaction are driven entirely by **gameplay events**, keeping **presentation** independent from core systems.
 
 ## What I Learned
 
-- Designing gameplay systems with **clear responsibility boundaries** between **game state**, **actors**, and **components**.
-- Implementing classic AI behavior in a maintainable way using **state machines**, **timers**, and **grid-based reasoning**.
+- Designing gameplay systems with **clear responsibility separation** between **game state**, **actors**, and **components**.
+- Implementing classic AI behavior in a maintainable way using **state machines**, **timers**, and **grid-based behaviour**.
 - Choosing **delegates over direct references** to keep gameplay systems **flexible** and more **testable**.
 - Understanding how Unreal’s gameplay lifecycle (**BeginPlay**, timers, restart/quit flow) affects system design.
-- Favoring **clarity and correctness** in gameplay code over over-engineering.
 
 
 ---
