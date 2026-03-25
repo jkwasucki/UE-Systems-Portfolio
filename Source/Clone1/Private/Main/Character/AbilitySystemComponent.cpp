@@ -175,49 +175,66 @@ void UAbilitySystemComponent::ResolveAbilityInput_Server(FGameplayTag AbilityTag
 
 void UAbilitySystemComponent::TryUseAbility(UAbilityData* Ability)
 {
-	
+	UE_LOG(LogTemp, Log, TEXT("ASC TryUseAbility: [%s]"), *GetNameSafe(Ability));
+
 	if (bIsCasting)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC TryUseAbility: Already casting, ignoring request for [%s]"), *GetNameSafe(Ability));
 		return;
-	
+	}
+
 	EAbilityFailureReason FailureReason = EAbilityFailureReason::None;
 	FAbilityTargetData TargetData;
 	if (Validate(Ability, TargetData, FailureReason))
 	{
+		UE_LOG(LogTemp, Log, TEXT("ASC TryUseAbility: Validation passed for [%s], committing and executing"), *GetNameSafe(Ability));
 		Commit(Ability);
 		Execute(Ability, TargetData);
 	}
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC TryUseAbility: Validation failed for [%s]"), *GetNameSafe(Ability));
 		Client_OnCastFailed(Ability, FailureReason);
 	}
 }
 
 void UAbilitySystemComponent::TryUseAbility_Server(UAbilityData* Ability, FAbilityTargetData& ClientTargetData)
 {
+	UE_LOG(LogTemp, Log, TEXT("ASC TryUseAbility_Server: [%s]"), *GetNameSafe(Ability));
+
 	if (!GetPawn()->HasAuthority()) return;
-	
+
 	if (bIsCasting)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC TryUseAbility_Server: Already casting, ignoring [%s]"), *GetNameSafe(Ability));
 		return;
-	
+	}
+
 	EAbilityFailureReason FailureReason = EAbilityFailureReason::None;
 	if (Validate(Ability, ClientTargetData, FailureReason))
 	{
+		UE_LOG(LogTemp, Log, TEXT("ASC TryUseAbility_Server: Validation passed, executing [%s]"), *GetNameSafe(Ability));
 		Commit(Ability);
 		Execute(Ability, ClientTargetData);
 	}
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC TryUseAbility_Server: Validation failed for [%s]"), *GetNameSafe(Ability));
 		Client_OnCastFailed(Ability, FailureReason);
 	}
 }
 
 void UAbilitySystemComponent::TryAbortAbility(UAbilityData* Ability)
 {
+	UE_LOG(LogTemp, Log, TEXT("ASC TryAbortAbility: [%s]"), *GetNameSafe(Ability));
+
 	if (!GetPawn()->HasAuthority()) return;
-	
-	
+
 	if (!ActiveAbility)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC TryAbortAbility: No active ability to abort"));
 		return;
+	}
 
 	if (Ability->AbilityCastMode != EAbilityCastMode::Casted)
 		return;
@@ -349,6 +366,8 @@ void UAbilitySystemComponent::Commit(UAbilityData* Ability)
 
 void UAbilitySystemComponent::Execute(UAbilityData* Ability,FAbilityTargetData& InTargetData)
 {
+	UE_LOG(LogTemp, Log, TEXT("ASC Execute: Starting execution of [%s]"), *GetNameSafe(Ability));
+
 	// Create runtime instance
 	UActiveAbilityInstance* NewActiveAbilityInstance = NewObject<UActiveAbilityInstance>(this);
 	NewActiveAbilityInstance->AbilityTag = Ability->Tag;
@@ -410,12 +429,15 @@ void UAbilitySystemComponent::Execute(UAbilityData* Ability,FAbilityTargetData& 
 			SuccessCount++;
 		}
 	}
+	UE_LOG(LogTemp, Log, TEXT("ASC Execute: [%s] — %d/%d effects succeeded"), *GetNameSafe(Ability), SuccessCount, EffectCount);
+
 	if (SuccessCount > 0)
 	{
 		TrackCooldown(Ability);
 	}
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC Execute: No effects succeeded for [%s], refunding energy and aborting"), *GetNameSafe(Ability));
 		// Return energy cost and abort ability if no effect succeeded
 		IResourceInterface::Execute_ApplyResourceDelta(GetPawn(),ECharacterResource::Energy,Ability->EnergyCost);
 		TryAbortAbility(Ability);
